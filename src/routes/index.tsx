@@ -24,7 +24,7 @@ type State = "idle" | "recording" | "processing" | "results";
 
 const MAX_SECONDS = 60;
 
-const SESSION_ENDPOINT = "https://fxlysgacizwmecgbhjzs.supabase.co/functions/v1/session?mock=1";
+const SESSION_ENDPOINT = "https://fxlysgacizwmecgbhjzs.supabase.co/functions/v1/session";
 const SESSION_BEARER = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ4bHlzZ2FjaXp3bWVjZ2JoanpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4MzM5MTgsImV4cCI6MjA5NjQwOTkxOH0.EFzw1i63ITG07LESKe_C1_0s5Uq4bPWMRH76az91cGs";
 
 type SessionResponse = {
