@@ -1,11 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Mic, Square, Sparkles } from "lucide-react";
+import { Mic, Square, Sparkles, Play, Pause } from "lucide-react";
 import { BreathingOrb } from "@/components/lyra/BreathingOrb";
 import { Waveform } from "@/components/lyra/Waveform";
 import { MoodState } from "@/components/lyra/MoodState";
-import { IntegratedHealing } from "@/components/lyra/IntegratedHealing";
-import { extractVocalFeatures, buildMoodSignature, type MoodSignature, type VocalFeatures } from "@/lib/audio-features";
+import type { MoodSignature, VocalFeatures } from "@/lib/audio-features";
 import TribeBrain from "@/components/lyra/TribeBrain";
 import { PHQ9Card, type PHQ9Result } from "@/components/lyra/PHQ9Card";
 
@@ -25,22 +24,38 @@ type State = "idle" | "recording" | "processing" | "results";
 
 const MAX_SECONDS = 60;
 
+const SESSION_ENDPOINT = "https://fxlysgacizwmecgbhjzs.supabase.co/functions/v1/session?mock=1";
+const SESSION_BEARER = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ4bHlzZ2FjaXp3bWVjZ2JoanpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4MzM5MTgsImV4cCI6MjA5NjQwOTkxOH0.EFzw1i63ITG07LESKe_C1_0s5Uq4bPWMRH76az91cGs";
+
+type SessionResponse = {
+  transcript: string;
+  state: { arousal: number; distress: number; valence: number };
+  bpm: number;
+  musicUrl: string;
+  affirmations: string[];
+};
+
+function descriptorFor(s: { arousal: number; distress: number; valence: number }) {
+  const tone = s.distress > 0.66 ? "tender and stormy" : s.distress > 0.33 ? "soft and uncertain" : "settled";
+  const energy = s.arousal > 0.66 ? "charged" : s.arousal > 0.33 ? "stirring" : "still";
+  const warmth = s.valence > 0.6 ? "with light coming through" : s.valence < 0.4 ? "with a heavy undertone" : "holding steady";
+  return `Your voice sounds ${tone}, ${energy}, ${warmth}.`;
+}
+
 function LyraSession() {
   const [state, setState] = useState<State>("idle");
   const [elapsed, setElapsed] = useState(0);
   const [micError, setMicError] = useState<string | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const [recordedSeconds, setRecordedSeconds] = useState(42);
   const [transcript, setTranscript] = useState<string>("");
-  const [replyText, setReplyText] = useState<string>("");
-  const [replyAudioUrl, setReplyAudioUrl] = useState<string | null>(null);
   const [processError, setProcessError] = useState<string | null>(null);
   const [mood, setMood] = useState<MoodSignature | null>(null);
   const [features, setFeatures] = useState<VocalFeatures | null>(null);
+  const [bpm, setBpm] = useState<number | null>(null);
   const [musicUrl, setMusicUrl] = useState<string | null>(null);
-  const [musicBpm, setMusicBpm] = useState<number | null>(null);
-  const [musicLoading, setMusicLoading] = useState(false);
-  const [musicError, setMusicError] = useState<string | null>(null);
+  const [affirmations, setAffirmations] = useState<string[]>([]);
+  const [musicPlaying, setMusicPlaying] = useState(false);
+  const musicRef = useRef<HTMLAudioElement | null>(null);
   const [phq9, setPhq9] = useState<PHQ9Result | null>(null);
   const [phq9Loading, setPhq9Loading] = useState(false);
   const [phq9Error, setPhq9Error] = useState<string | null>(null);
@@ -62,7 +77,6 @@ function LyraSession() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 
-  // Cleanup object URLs
   useEffect(() => () => { if (audioUrl) URL.revokeObjectURL(audioUrl); }, [audioUrl]);
 
   async function startRecording() {
@@ -77,7 +91,7 @@ function LyraSession() {
             setMicError("Microphone is blocked. Enable it in your browser settings to record.");
             return;
           }
-        } catch { /* Safari: no mic permission query, fall through */ }
+        } catch { /* Safari */ }
       }
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -117,55 +131,42 @@ function LyraSession() {
   async function processRecording(blob: Blob) {
     setProcessError(null);
     setTranscript("");
-    setReplyText("");
     setMood(null);
     setFeatures(null);
-    if (replyAudioUrl) { URL.revokeObjectURL(replyAudioUrl); setReplyAudioUrl(null); }
+    setBpm(null);
+    setMusicUrl(null);
+    setAffirmations([]);
 
     try {
-      // Kick off feature extraction in parallel with STT — pure client-side, no extra latency on the server side
-      const featuresPromise = extractVocalFeatures(blob).catch((err) => {
-        console.warn("vocal feature extraction failed", err);
-        return null;
-      });
-
       const fd = new FormData();
-      fd.append("audio", blob, "recording.webm");
-      const sttRes = await fetch("/api/elevenlabs/stt", { method: "POST", body: fd });
-      if (!sttRes.ok) throw new Error((await sttRes.json())?.error || "Transcription failed");
-      const { text } = (await sttRes.json()) as { text: string };
-      const safeText = (text || "").trim() || "(I couldn't quite catch your words — I'm still here with you.)";
+      fd.append("file", blob, "recording.webm");
+
+      const res = await fetch(SESSION_ENDPOINT, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${SESSION_BEARER}` },
+        body: fd,
+      });
+      if (!res.ok) {
+        const errText = await res.text().catch(() => "");
+        throw new Error(errText || `Session failed: ${res.status}`);
+      }
+      const data = (await res.json()) as SessionResponse;
+
+      const safeText = (data.transcript || "").trim() || "(I couldn't quite catch your words — I'm still here with you.)";
       setTranscript(safeText);
 
-      const feats = await featuresPromise;
-      let moodSig: MoodSignature | null = null;
-      if (feats) {
-        moodSig = buildMoodSignature(feats, safeText);
-        setFeatures(feats);
-        setMood(moodSig);
-      }
+      const s = data.state ?? { arousal: 0.5, distress: 0.5, valence: 0.5 };
+      const moodSig: MoodSignature = {
+        distress: s.distress,
+        arousal: s.arousal,
+        descriptor: descriptorFor(s),
+      };
+      setMood(moodSig);
+      setFeatures(null); // server-side state replaces local feature extraction
+      setBpm(data.bpm ?? null);
+      setMusicUrl(data.musicUrl ?? null);
+      setAffirmations(Array.isArray(data.affirmations) ? data.affirmations.slice(0, 2) : []);
 
-      const replyRes = await fetch("/api/elevenlabs/reply", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          transcript: safeText,
-          vocalMood: moodSig?.descriptor,
-          distress: moodSig?.distress,
-          arousal: moodSig?.arousal,
-        }),
-      });
-      if (!replyRes.ok) throw new Error((await replyRes.json())?.error || "Reply failed");
-      const { reply, audio_base64 } = (await replyRes.json()) as { reply: string; audio_base64: string };
-      setReplyText(reply);
-      setReplyAudioUrl(`data:audio/mpeg;base64,${audio_base64}`);
-
-      // Fire music generation (don't block results screen)
-      if (moodSig) {
-        void generateMusic(moodSig.distress);
-      }
-
-      // Fire PHQ-9 screening in parallel
       void screenPhq9(safeText);
     } catch (e) {
       setProcessError(e instanceof Error ? e.message : "Something went quiet. Please try again.");
@@ -176,33 +177,11 @@ function LyraSession() {
 
   function stopRecording() {
     if (timerRef.current) clearInterval(timerRef.current);
-    setRecordedSeconds(Math.max(1, elapsed || 1));
     const r = recorderRef.current;
     if (r && r.state !== "inactive") {
-      r.stop(); // onstop runs processRecording → results
+      r.stop();
     } else {
       setState("results");
-    }
-  }
-  async function generateMusic(distress: number) {
-    setMusicLoading(true);
-    setMusicError(null);
-    setMusicUrl(null);
-    setMusicBpm(null);
-    try {
-      const res = await fetch("/api/elevenlabs/music", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ distress }),
-      });
-      if (!res.ok) throw new Error((await res.json())?.error || "Music failed");
-      const { audio_base64, bpm } = (await res.json()) as { audio_base64: string; bpm: number };
-      setMusicUrl(`data:audio/mpeg;base64,${audio_base64}`);
-      setMusicBpm(bpm);
-    } catch (e) {
-      setMusicError(e instanceof Error ? e.message : "Couldn't compose your track.");
-    } finally {
-      setMusicLoading(false);
     }
   }
 
@@ -231,19 +210,24 @@ function LyraSession() {
     }
   }
 
+  function toggleMusic() {
+    const el = musicRef.current;
+    if (!el) return;
+    if (el.paused) { el.play().catch(() => {}); }
+    else { el.pause(); }
+  }
+
   function reset() {
     setElapsed(0);
     if (audioUrl) { URL.revokeObjectURL(audioUrl); setAudioUrl(null); }
-    if (replyAudioUrl) { URL.revokeObjectURL(replyAudioUrl); setReplyAudioUrl(null); }
     setTranscript("");
-    setReplyText("");
     setProcessError(null);
     setMood(null);
     setFeatures(null);
+    setBpm(null);
     setMusicUrl(null);
-    setMusicBpm(null);
-    setMusicError(null);
-    setMusicLoading(false);
+    setAffirmations([]);
+    setMusicPlaying(false);
     setPhq9(null);
     setPhq9Error(null);
     setPhq9Loading(false);
@@ -256,7 +240,6 @@ function LyraSession() {
 
   return (
     <main className="relative min-h-screen overflow-hidden">
-      {/* aurora background */}
       <div className="absolute inset-0 -z-10" style={{ background: "var(--gradient-aurora)" }} />
       <div className="absolute inset-0 -z-10 opacity-[0.04]" style={{
         backgroundImage: "radial-gradient(circle at 1px 1px, white 1px, transparent 0)",
@@ -264,7 +247,6 @@ function LyraSession() {
       }} />
 
       <div className="mx-auto flex min-h-screen max-w-2xl flex-col px-6 py-10 sm:py-14">
-        {/* Header */}
         <header className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="grid h-9 w-9 place-items-center rounded-full" style={{ background: "var(--gradient-orb)" }} />
@@ -275,7 +257,6 @@ function LyraSession() {
           </span>
         </header>
 
-        {/* Greeting */}
         <section className="mt-10 text-center sm:mt-14">
           <h1 className="font-display text-4xl leading-[1.1] text-foreground sm:text-5xl">
             Hi, how are you<br />
@@ -289,12 +270,10 @@ function LyraSession() {
           </p>
         </section>
 
-        {/* Stage */}
         <section className="relative mt-10 flex flex-1 flex-col items-center justify-center">
-          {/* Breathing orb stage — idle / recording / processing */}
           {state !== "results" && (
             <div className="relative flex flex-col items-center" style={{ animation: "float-slow 6s ease-in-out infinite" }}>
-              <BreathingOrb active size={260} />
+              <BreathingOrb active size={260} bpm={bpm} />
               {state === "idle" && (
                 <p className="mt-2 text-xs uppercase tracking-[0.3em] text-muted-foreground">Breathe · in · out</p>
               )}
@@ -310,13 +289,12 @@ function LyraSession() {
               {state === "processing" && (
                 <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
                   <Sparkles className="h-4 w-4 animate-pulse text-primary" />
-                  <span className="font-display italic">Listening with care…</span>
+                  <span className="font-display italic">Listening to you…</span>
                 </div>
               )}
             </div>
           )}
 
-          {/* Action button — tap to toggle record */}
           {(state === "idle" || state === "recording") && (
             <div className="mt-10 flex flex-col items-center gap-3">
               <button
@@ -345,19 +323,55 @@ function LyraSession() {
             </div>
           )}
 
-          {/* Results */}
           {state === "results" && (
             <div className="w-full space-y-6 animate-[fade-in_0.6s_ease-out]">
-              {/* Unified voice + music healing session */}
-              <IntegratedHealing
-                voiceUrl={replyAudioUrl}
-                musicUrl={musicUrl}
-                musicBpm={musicBpm}
-                musicLoading={musicLoading}
-                musicError={musicError}
-                replyText={replyText}
-                distress={mood?.distress ?? 0.5}
-              />
+              {/* Breathing orb tuned to returned BPM */}
+              <div className="flex flex-col items-center">
+                <BreathingOrb active size={220} bpm={bpm} />
+                {bpm && (
+                  <p className="mt-2 text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+                    Breathing with you · {bpm} bpm
+                  </p>
+                )}
+              </div>
+
+              {/* Affirmations — large soft centered text */}
+              {affirmations.length > 0 && (
+                <div className="rounded-3xl border border-border/60 bg-card/60 p-8 text-center backdrop-blur-xl" style={{ boxShadow: "var(--shadow-soft)" }}>
+                  <div className="space-y-5">
+                    {affirmations.map((a, i) => (
+                      <p key={i} className="font-display text-2xl leading-snug text-foreground/90 sm:text-3xl">
+                        {a}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Music player */}
+              {musicUrl && (
+                <div className="flex flex-col items-center gap-3 rounded-3xl border border-border/60 bg-card/60 p-6 backdrop-blur-xl" style={{ boxShadow: "var(--shadow-soft)" }}>
+                  <audio
+                    ref={musicRef}
+                    src={musicUrl}
+                    preload="auto"
+                    onPlay={() => setMusicPlaying(true)}
+                    onPause={() => setMusicPlaying(false)}
+                    onEnded={() => setMusicPlaying(false)}
+                  />
+                  <button
+                    onClick={toggleMusic}
+                    className="inline-flex items-center gap-3 rounded-full bg-primary/90 px-6 py-3 text-primary-foreground transition hover:scale-[1.02]"
+                    style={{ boxShadow: "var(--shadow-glow)" }}
+                  >
+                    {musicPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+                    <span className="font-medium">{musicPlaying ? "Pause your track" : "Play your track"}</span>
+                  </button>
+                  <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+                    A track shaped for this moment
+                  </p>
+                </div>
+              )}
 
               {processError && (
                 <p className="text-center text-sm text-blush">{processError}</p>
@@ -365,43 +379,19 @@ function LyraSession() {
 
               {transcript && (
                 <div className="rounded-3xl border border-border/60 bg-card/60 p-6 backdrop-blur-xl" style={{ boxShadow: "var(--shadow-soft)" }}>
-                  <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">What you shared</p>
+                  <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">What I heard</p>
                   <p className="mt-2 text-sm italic leading-relaxed text-muted-foreground">"{transcript}"</p>
                 </div>
               )}
 
               <MoodState distress={mood?.distress ?? 0.5} arousal={mood?.arousal ?? 0.5} />
               <PHQ9Card result={phq9} loading={phq9Loading} error={phq9Error} crisis={crisis} />
-              {features && (
-                <div className="rounded-3xl border border-border/60 bg-card/60 p-5 backdrop-blur-xl" style={{ boxShadow: "var(--shadow-soft)" }}>
-                  <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Voice signature</p>
-                  <p className="mt-2 text-sm leading-relaxed text-foreground/90">{mood?.descriptor}</p>
-                  <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    {[
-                      { k: "Pitch", v: features.pitchMeanHz ? `${Math.round(features.pitchMeanHz)} Hz` : "—" },
-                      { k: "Intonation", v: features.pitchVarHz ? `±${Math.round(features.pitchVarHz)} Hz` : "—" },
-                      { k: "Pace", v: features.speechRateWps ? `${features.speechRateWps.toFixed(1)} w/s` : "—" },
-                      { k: "Pauses", v: `${Math.round(features.pauseRatio * 100)}%` },
-                    ].map((m) => (
-                      <div key={m.k} className="rounded-2xl border border-border/50 bg-background/40 p-3">
-                        <p className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground/80">{m.k}</p>
-                        <p className="mt-1 font-mono text-sm text-foreground tabular-nums">{m.v}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
 
               <TribeBrain mood={mood} features={features} />
 
-
-
-
-
-
               <div className="flex justify-center pt-2">
                 <button onClick={reset} className="rounded-full border border-border/60 bg-card/50 px-6 py-3 text-sm text-foreground backdrop-blur transition hover:bg-card">
-                  Begin another check-in
+                  New check-in
                 </button>
               </div>
             </div>
