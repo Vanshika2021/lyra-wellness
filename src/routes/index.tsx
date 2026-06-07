@@ -191,7 +191,14 @@ function LyraSession() {
         descriptor: descriptorFor(s),
       };
       setMood(moodSig);
-      setFeatures(null); // server-side state replaces local feature extraction
+      // Extract vocal features client-side so the Neural Mood Map reacts to
+      // pitch / dynamics / speech rate / voicing — not just distress.
+      try {
+        const vf = await extractVocalFeatures(blob);
+        setFeatures(vf);
+      } catch {
+        setFeatures(null);
+      }
       setBpm(data.bpm ?? null);
       setMusicUrl(data.musicUrl ?? null);
 
