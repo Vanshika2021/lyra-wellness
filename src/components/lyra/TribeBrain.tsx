@@ -22,7 +22,15 @@ type Region = {
   color: string;     // glow color
   activation: number; // 0..1
   driver: string;    // human-readable formula driver
+  meaning: string;   // plain-English interpretation
 };
+
+function activationLabel(v: number): { label: string; tone: string } {
+  if (v >= 0.75) return { label: "Highly active", tone: "oklch(0.78 0.16 25)" };
+  if (v >= 0.55) return { label: "Engaged",       tone: "oklch(0.80 0.14 60)" };
+  if (v >= 0.35) return { label: "Steady",        tone: "oklch(0.78 0.10 200)" };
+  return            { label: "Quiet",          tone: "oklch(0.70 0.05 250)" };
+}
 
 function clamp01(v: number) { return v < 0 ? 0 : v > 1 ? 1 : v; }
 
