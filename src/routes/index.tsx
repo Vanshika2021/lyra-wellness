@@ -7,6 +7,17 @@ import { MoodState } from "@/components/lyra/MoodState";
 import type { MoodSignature, VocalFeatures } from "@/lib/audio-features";
 import TribeBrain from "@/components/lyra/TribeBrain";
 import { PHQ9Card, type PHQ9Result } from "@/components/lyra/PHQ9Card";
+import ambientCalm from "@/assets/ambient-calm.mp4.asset.json";
+import ambientWarm from "@/assets/ambient-warm.mp4.asset.json";
+import ambientGrounded from "@/assets/ambient-grounded.mp4.asset.json";
+import ambientNight from "@/assets/ambient-night.mp4.asset.json";
+
+function pickAmbient(distress: number, arousal: number): string {
+  // High distress → comforting warmth or quieting night depending on energy
+  if (distress >= 0.6) return arousal >= 0.55 ? ambientWarm.url : ambientNight.url;
+  // Lower distress → calm water for energetic, grounded forest for low-energy
+  return arousal >= 0.55 ? ambientCalm.url : ambientGrounded.url;
+}
 
 export const Route = createFileRoute("/")({
   head: () => ({
