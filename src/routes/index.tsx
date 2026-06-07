@@ -432,12 +432,31 @@ function LyraSession() {
   const ambientSrc = pickAmbient(mood?.distress ?? 0.5, mood?.arousal ?? 0.5);
   const ambientRef = useRef<HTMLVideoElement | null>(null);
   const showAmbient = state === "results" && musicPlaying;
+  const autoStartedRef = useRef(false);
+
   useEffect(() => {
     const el = ambientRef.current;
     if (!el) return;
     if (showAmbient) { el.play().catch(() => {}); }
     else { el.pause(); }
   }, [showAmbient, ambientSrc]);
+
+  useEffect(() => {
+    if (state === "results" && !autoStartedRef.current) {
+      autoStartedRef.current = true;
+      const el = musicRef.current;
+      if (el && musicUrl) {
+        el.volume = 0.65;
+        el.play().then(() => {
+          scheduleAffirmations();
+        }).catch(() => {});
+      }
+    }
+    if (state !== "results") {
+      autoStartedRef.current = false;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state, musicUrl]);
 
   return (
     <main className="relative min-h-screen overflow-hidden">
