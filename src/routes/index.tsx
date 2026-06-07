@@ -26,28 +26,94 @@ const MAX_SECONDS = 60;
 function LyraSession() {
   const [state, setState] = useState<State>("idle");
   const [elapsed, setElapsed] = useState(0);
+  const [micError, setMicError] = useState<string | null>(null);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [recordedSeconds, setRecordedSeconds] = useState(42);
   const timerRef = useRef<number | null>(null);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
 
   useEffect(() => {
-    if (state === "recording") {
-      timerRef.current = window.setInterval(() => {
-        setElapsed((v) => {
-          if (v + 1 >= MAX_SECONDS) { stopRecording(); return MAX_SECONDS; }
-          return v + 1;
-        });
-      }, 1000);
-    }
+    if (state !== "recording") return;
+    timerRef.current = window.setInterval(() => {
+      setElapsed((v) => {
+        if (v + 1 >= MAX_SECONDS) { stopRecording(); return MAX_SECONDS; }
+        return v + 1;
+      });
+    }, 1000);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 
-  function startRecording() { setElapsed(0); setState("recording"); }
+  // Cleanup object URLs
+  useEffect(() => () => { if (audioUrl) URL.revokeObjectURL(audioUrl); }, [audioUrl]);
+
+  async function startRecording() {
+    setMicError(null);
+    if (audioUrl) { URL.revokeObjectURL(audioUrl); setAudioUrl(null); }
+
+    try {
+      if (navigator.permissions) {
+        try {
+          const status = await navigator.permissions.query({ name: "microphone" as PermissionName });
+          if (status.state === "denied") {
+            setMicError("Microphone is blocked. Enable it in your browser settings to record.");
+            return;
+          }
+        } catch { /* Safari: no mic permission query, fall through */ }
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+        ? "audio/webm;codecs=opus"
+        : MediaRecorder.isTypeSupported("audio/mp4")
+          ? "audio/mp4"
+          : undefined;
+
+      const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      chunksRef.current = [];
+      recorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
+      recorder.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: mimeType || "audio/webm" });
+        const url = URL.createObjectURL(blob);
+        setAudioUrl(url);
+        streamRef.current?.getTracks().forEach((t) => t.stop());
+        streamRef.current = null;
+        setState("processing");
+        setTimeout(() => setState("results"), 2600);
+      };
+      recorderRef.current = recorder;
+      recorder.start(250);
+      setElapsed(0);
+      setState("recording");
+    } catch (err) {
+      const name = (err as DOMException)?.name;
+      if (name === "NotAllowedError") setMicError("Microphone permission denied. Allow access to record.");
+      else if (name === "NotFoundError") setMicError("No microphone was found on this device.");
+      else if (name === "NotReadableError") setMicError("Your microphone is in use by another app.");
+      else setMicError("Couldn't start recording. Please try again.");
+    }
+  }
+
   function stopRecording() {
     if (timerRef.current) clearInterval(timerRef.current);
-    setState("processing");
-    setTimeout(() => setState("results"), 2600);
+    setRecordedSeconds(Math.max(1, elapsed || 1));
+    const r = recorderRef.current;
+    if (r && r.state !== "inactive") {
+      r.stop(); // onstop transitions to processing → results
+    } else {
+      setState("processing");
+      setTimeout(() => setState("results"), 2600);
+    }
   }
-  function reset() { setElapsed(0); setState("idle"); }
+  function reset() {
+    setElapsed(0);
+    if (audioUrl) { URL.revokeObjectURL(audioUrl); setAudioUrl(null); }
+    setState("idle");
+  }
 
   const remaining = MAX_SECONDS - elapsed;
   const fmt = (s: number) => `0:${String(s).padStart(2, "0")}`;
