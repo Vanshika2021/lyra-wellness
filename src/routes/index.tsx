@@ -182,14 +182,19 @@ function LyraSession() {
 
           {/* Action button */}
           {state === "idle" && (
-            <button
-              onClick={startRecording}
-              className="group mt-10 inline-flex items-center gap-3 rounded-full bg-primary px-7 py-4 text-primary-foreground transition hover:scale-[1.02]"
-              style={{ boxShadow: "var(--shadow-glow)" }}
-            >
-              <Mic className="h-5 w-5" />
-              <span className="font-medium">Start a 60-second check-in</span>
-            </button>
+            <div className="mt-10 flex flex-col items-center gap-3">
+              <button
+                onClick={startRecording}
+                className="group inline-flex items-center gap-3 rounded-full bg-primary px-7 py-4 text-primary-foreground transition hover:scale-[1.02]"
+                style={{ boxShadow: "var(--shadow-glow)" }}
+              >
+                <Mic className="h-5 w-5" />
+                <span className="font-medium">Start a 60-second check-in</span>
+              </button>
+              {micError && (
+                <p className="max-w-xs text-center text-xs text-blush">{micError}</p>
+              )}
+            </div>
           )}
           {state === "recording" && (
             <button
@@ -212,7 +217,7 @@ function LyraSession() {
                   </div>
                   <Sparkles className="h-5 w-5 text-primary" />
                 </div>
-                <AudioPlayer duration={42} />
+                <AudioPlayer src={audioUrl ?? undefined} duration={recordedSeconds} />
                 <p className="mt-5 text-sm leading-relaxed text-muted-foreground">
                   "I hear that today feels heavy. Let's breathe together for a moment — your body is asking for softness, not solutions."
                 </p>
