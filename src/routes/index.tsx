@@ -4,7 +4,7 @@ import { Mic, Square, Sparkles, Play, Pause } from "lucide-react";
 import { BreathingOrb } from "@/components/lyra/BreathingOrb";
 import { Waveform } from "@/components/lyra/Waveform";
 import { MoodState } from "@/components/lyra/MoodState";
-import { extractVocalFeatures, type MoodSignature, type VocalFeatures } from "@/lib/audio-features";
+import { extractVocalFeatures, buildMoodSignature, type MoodSignature, type VocalFeatures } from "@/lib/audio-features";
 import TribeBrain from "@/components/lyra/TribeBrain";
 import { PHQ9Card, type PHQ9Result } from "@/components/lyra/PHQ9Card";
 import ambientCalm from "@/assets/ambient-calm.mp4.asset.json";
@@ -185,20 +185,37 @@ function LyraSession() {
       setTranscript(safeText);
 
       const s = data.state ?? { arousal: 0.5, distress: 0.5, valence: 0.5 };
-      const moodSig: MoodSignature = {
-        distress: s.distress,
-        arousal: s.arousal,
-        descriptor: descriptorFor(s),
-      };
-      setMood(moodSig);
       // Extract vocal features client-side so the Neural Mood Map reacts to
       // pitch / dynamics / speech rate / voicing — not just distress.
+      let vf: VocalFeatures | null = null;
       try {
-        const vf = await extractVocalFeatures(blob);
+        vf = await extractVocalFeatures(blob);
         setFeatures(vf);
       } catch {
         setFeatures(null);
       }
+
+      // Server occasionally returns 0 for distress/arousal. Fall back to a
+      // client-side estimate from vocal features so the gauges always show
+      // a meaningful score instead of a flat zero.
+      let distress = s.distress;
+      let arousal = s.arousal;
+      if (vf && (!Number.isFinite(distress) || distress <= 0.02 || !Number.isFinite(arousal) || arousal <= 0.02)) {
+        const local = buildMoodSignature(vf, safeText);
+        if (!Number.isFinite(distress) || distress <= 0.02) distress = local.distress;
+        if (!Number.isFinite(arousal) || arousal <= 0.02) arousal = local.arousal;
+      }
+      // Final floor so a near-silent or odd recording still reads as a low
+      // (but non-zero) baseline rather than "0%".
+      distress = Math.max(0.08, Math.min(1, distress));
+      arousal = Math.max(0.08, Math.min(1, arousal));
+
+      const moodSig: MoodSignature = {
+        distress,
+        arousal,
+        descriptor: descriptorFor({ ...s, distress, arousal }),
+      };
+      setMood(moodSig);
       setBpm(data.bpm ?? null);
       setMusicUrl(data.musicUrl ?? null);
 
