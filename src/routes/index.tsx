@@ -34,6 +34,8 @@ function LyraSession() {
   const [replyText, setReplyText] = useState<string>("");
   const [replyAudioUrl, setReplyAudioUrl] = useState<string | null>(null);
   const [processError, setProcessError] = useState<string | null>(null);
+  const [mood, setMood] = useState<MoodSignature | null>(null);
+  const [features, setFeatures] = useState<VocalFeatures | null>(null);
   const timerRef = useRef<number | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
