@@ -162,7 +162,7 @@ function LyraSession() {
     }
   }
 
-  async function processRecording(blob: Blob) {
+  async function processRecording(blob: Blob, clonePromise?: Promise<string | null>) {
     setProcessError(null);
     setTranscript("");
     setMood(null);
