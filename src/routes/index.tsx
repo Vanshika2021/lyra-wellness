@@ -69,9 +69,22 @@ function LyraSession() {
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const NEURAL_SRC = "https://fxlysgacizwmecgbhjzs.supabase.co/storage/v1/object/public/tracks/tribe_demo_hardcoded.html";
   const [neuralError, setNeuralError] = useState(false);
   const [neuralFullscreen, setNeuralFullscreen] = useState(false);
   const neuralWrapRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    fetch(NEURAL_SRC, { method: "GET", mode: "no-cors" })
+      .then(async () => {
+        try {
+          const r = await fetch(NEURAL_SRC, { method: "GET" });
+          if (!cancelled && !r.ok) setNeuralError(true);
+        } catch { /* CORS opaque — let iframe try */ }
+      })
+      .catch(() => { if (!cancelled) setNeuralError(true); });
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     if (state !== "recording") return;
@@ -476,14 +489,14 @@ function LyraSession() {
               {/* Affirmations — editorial serif, like a printed poem */}
               {affirmations.length > 0 && (
                 <div
-                  className="rounded-3xl border border-border/60 bg-card/60 px-8 py-12 text-center backdrop-blur-xl sm:px-14 sm:py-16"
+                  className="rounded-3xl border border-border/60 bg-card/60 px-8 py-14 text-center backdrop-blur-xl sm:px-16 sm:py-20"
                   style={{ boxShadow: "var(--shadow-soft)" }}
                 >
-                  <div className="space-y-10 sm:space-y-12">
+                  <div className="space-y-14 sm:space-y-20">
                     {affirmations.map((a, i) => (
                       <p
                         key={i}
-                        className="text-balance text-[1.75rem] italic leading-[1.35] text-foreground/90 sm:text-[2.5rem] sm:leading-[1.3]"
+                        className="text-balance text-[2.25rem] italic leading-[1.3] text-foreground/90 sm:text-[3.25rem] sm:leading-[1.25]"
                         style={{
                           fontFamily: '"Instrument Serif", Fraunces, Georgia, serif',
                           fontWeight: 400,
