@@ -587,8 +587,8 @@ function LyraSession() {
                   <div className="relative w-full overflow-hidden rounded-2xl border border-white/[0.06]">
                     <iframe
                       src="https://fxlysgacizwmecgbhjzs.supabase.co/storage/v1/object/public/tracks/tribe_demo_hardcoded.html"
-                      className="w-full"
-                      style={{ height: "640px", border: "none", display: "block" }}
+                      className="h-[70vh] w-full sm:h-[640px]"
+                      style={{ border: "none", display: "block" }}
                       loading="lazy"
                       onError={() => setNeuralError(true)}
                       allow="fullscreen"
