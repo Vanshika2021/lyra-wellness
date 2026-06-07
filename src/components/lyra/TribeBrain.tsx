@@ -173,6 +173,12 @@ export default function TribeBrain({ mood, features }: Props) {
             v2 · live
           </span>
         </div>
+
+        {narrative && (
+          <p className="mt-4 text-balance text-sm leading-relaxed text-foreground/85">
+            {narrative}
+          </p>
+        )}
       </div>
 
       <div className="relative mt-4 aspect-[16/10] w-full bg-[oklch(0.16_0.03_270)]">
