@@ -486,7 +486,13 @@ function LyraSession() {
                     <span className="font-medium">{musicPlaying ? "Pause your track" : "Play your track"}</span>
                   </button>
                   <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-                    A track shaped for this moment
+                    {voiceLoading
+                      ? "Weaving your affirmations into the music…"
+                      : voiceError
+                        ? "Music only — affirmations couldn't be voiced"
+                        : voiceAudiosRef.current.length > 0
+                          ? "Affirmations will rise softly over the music"
+                          : "A track shaped for this moment"}
                   </p>
                 </div>
               )}
