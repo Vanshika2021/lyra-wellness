@@ -262,8 +262,25 @@ function LyraSession() {
         if (json?.crisis) setCrisis(true);
         throw new Error(json?.error || "Screening failed");
       }
-      setCrisis(Boolean(json?.crisis));
-      setPhq9(json?.screening ?? null);
+      const isCrisis = Boolean(json?.crisis);
+      const screening = json?.screening ?? null;
+      setCrisis(isCrisis);
+      setPhq9(screening);
+
+      // Silently notify emergency contacts if severe distress detected
+      const total = typeof screening?.total === "number" ? screening.total : 0;
+      const sev = (screening?.severity || "").toLowerCase();
+      const isSevere = isCrisis || total >= 15 || sev.includes("severe");
+      if (isSevere) {
+        fetch("/api/crisis-alert", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            reason: isCrisis ? "crisis language detected" : `elevated PHQ-9 (${total})`,
+            transcript: text,
+          }),
+        }).catch(() => {});
+      }
     } catch (e) {
       setPhq9Error(e instanceof Error ? e.message : "Couldn't complete wellness insight.");
     } finally {

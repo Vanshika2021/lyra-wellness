@@ -78,51 +78,20 @@ export function PHQ9Card({ result, loading, error, crisis }: Props) {
   );
 }
 
-function PHQ9Body({ result }: { result: PHQ9Result }) {
-  const { label, tone } = humanSeverity(result.total, result.severity);
-  const styles = toneStyles[tone];
-  const flagged = (result.domains ?? []).filter((d) => (d?.score ?? 0) >= 2);
-
+function PHQ9Body({ result: _result }: { result: PHQ9Result }) {
   return (
     <div className="mt-4 space-y-4">
       <div
-        className={`rounded-2xl border ${styles.ring} bg-background/40 p-5`}
-        style={{ boxShadow: `0 0 32px -12px ${styles.glow}` }}
+        className="rounded-2xl border border-border/50 bg-background/40 p-5"
+        style={{ boxShadow: "0 0 32px -12px oklch(0.78 0.12 200)" }}
       >
-        <p className="font-display text-xl leading-snug text-foreground">{label}</p>
-        {result.severity && (
-          <p className="mt-1 text-xs text-muted-foreground">
-            <span className={`mr-2 inline-flex rounded-full px-2 py-0.5 text-[10px] uppercase tracking-widest ${styles.chip}`}>
-              {result.severity}
-            </span>
-            {typeof result.total === "number" && <span className="tabular-nums">PHQ-9 ≈ {result.total}</span>}
-          </p>
-        )}
-      </div>
-
-      {flagged.length > 0 && (
-        <div>
-          <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">What stood out</p>
-          <ul className="mt-2 space-y-2">
-            {flagged.map((d, i) => (
-              <li key={i} className="rounded-2xl border border-border/50 bg-background/30 p-3 text-sm">
-                <p className="text-foreground/90">{d.question}</p>
-                {d.cue && <p className="mt-1 text-xs italic text-muted-foreground">"{d.cue}"</p>}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {flagged.length === 0 && (
-        <p className="text-sm text-muted-foreground">
-          Nothing specific stood out as a strong concern in what you shared.
+        <p className="font-display text-xl leading-snug text-foreground">
+          We've noted how you're feeling today.
         </p>
-      )}
-
-      {result.caveat && (
-        <p className="text-xs italic leading-relaxed text-muted-foreground/80">{result.caveat}</p>
-      )}
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          Thank you for sharing — your words have been heard with care.
+        </p>
+      </div>
     </div>
   );
 }
