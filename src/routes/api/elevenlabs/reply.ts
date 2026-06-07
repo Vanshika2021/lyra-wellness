@@ -15,7 +15,12 @@ export const Route = createFileRoute("/api/elevenlabs/reply")({
           );
         }
 
-        const { transcript } = (await request.json()) as { transcript?: string };
+        const { transcript, vocalMood, distress, arousal } = (await request.json()) as {
+          transcript?: string;
+          vocalMood?: string;
+          distress?: number;
+          arousal?: number;
+        };
         const userText = (transcript ?? "").trim();
         if (!userText) {
           return new Response(JSON.stringify({ error: "Empty transcript" }), {
@@ -23,6 +28,14 @@ export const Route = createFileRoute("/api/elevenlabs/reply")({
             headers: { "Content-Type": "application/json" },
           });
         }
+
+        const moodLine = vocalMood
+          ? `\n\nHer voice this moment — ${vocalMood}${
+              typeof distress === "number" && typeof arousal === "number"
+                ? ` (inner-weather ~${distress.toFixed(2)}, energy ~${arousal.toFixed(2)} on 0–1)`
+                : ""
+            }. Mirror this *how*, not just the words. If her voice is small, soft, or hesitant, slow down and become quieter with her. If it's fast or charged, meet the heat gently before easing it. If it's flat or monotone, name the heaviness with tenderness.`
+          : "";
 
         // 1) Generate a gentle reflection with Lovable AI Gateway
         const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -37,7 +50,8 @@ export const Route = createFileRoute("/api/elevenlabs/reply")({
               {
                 role: "system",
                 content:
-                  "You are Lyra, a warm, embodied companion for women navigating PMDD. Respond to what the user just shared in 2–3 short sentences. Be tender, validating, and grounded — never clinical, never prescriptive. Use 'you' and speak directly. No lists, no advice unless gently invited. Mirror their feeling first.",
+                  "You are Lyra, a warm, embodied companion for women navigating PMDD. Respond in 2–3 short sentences. Be tender, validating, grounded — never clinical or prescriptive. Use 'you' and speak directly. No lists, no advice unless gently invited. Mirror their feeling first — and crucially match the *texture* of their voice (pace, weight, energy), not only the words." +
+                  moodLine,
               },
               { role: "user", content: userText },
             ],
