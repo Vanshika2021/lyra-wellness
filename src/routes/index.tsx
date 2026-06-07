@@ -218,16 +218,15 @@ function LyraSession() {
             </div>
           )}
 
-          {/* Action button — hold to record */}
+          {/* Action button — tap to toggle record */}
           {(state === "idle" || state === "recording") && (
-            <div className="mt-10 flex flex-col items-center gap-3 select-none">
+            <div className="mt-10 flex flex-col items-center gap-3">
               <button
-                onPointerDown={(e) => { e.preventDefault(); if (state === "idle") startRecording(); }}
-                onPointerUp={(e) => { e.preventDefault(); if (state === "recording") stopRecording(); }}
-                onPointerLeave={() => { if (state === "recording") stopRecording(); }}
-                onPointerCancel={() => { if (state === "recording") stopRecording(); }}
-                onContextMenu={(e) => e.preventDefault()}
-                className={`group inline-flex touch-none items-center gap-3 rounded-full px-7 py-4 transition ${
+                onClick={() => {
+                  if (state === "idle") startRecording();
+                  else stopRecording();
+                }}
+                className={`group inline-flex items-center gap-3 rounded-full px-7 py-4 transition ${
                   state === "recording"
                     ? "scale-105 bg-blush text-background"
                     : "bg-primary text-primary-foreground hover:scale-[1.02]"
@@ -236,11 +235,11 @@ function LyraSession() {
               >
                 {state === "recording" ? <Square className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
                 <span className="font-medium">
-                  {state === "recording" ? "Release to finish" : "Hold to speak"}
+                  {state === "recording" ? "Tap to finish" : "Tap to speak"}
                 </span>
               </button>
               <p className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground">
-                {state === "recording" ? "Listening…" : "Press & hold · up to 60s"}
+                {state === "recording" ? `Recording… ${fmt(remaining)} remaining` : "Up to 60 seconds"}
               </p>
               {micError && (
                 <p className="max-w-xs text-center text-xs text-blush">{micError}</p>
