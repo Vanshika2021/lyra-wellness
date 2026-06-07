@@ -271,7 +271,7 @@ function LyraSession() {
     }
   }
 
-  async function loadAffirmationVoices(items: string[]) {
+  async function loadAffirmationVoices(items: string[], voiceId?: string) {
     // Cleanup any previously loaded voices
     voiceAudiosRef.current.forEach((a) => { a.pause(); a.src = ""; });
     voiceAudiosRef.current = [];
