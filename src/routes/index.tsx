@@ -371,6 +371,7 @@ function LyraSession() {
               )}
 
               <MoodState distress={mood?.distress ?? 0.5} arousal={mood?.arousal ?? 0.5} />
+              <PHQ9Card result={phq9} loading={phq9Loading} error={phq9Error} crisis={crisis} />
               {features && (
                 <div className="rounded-3xl border border-border/60 bg-card/60 p-5 backdrop-blur-xl" style={{ boxShadow: "var(--shadow-soft)" }}>
                   <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Voice signature</p>
