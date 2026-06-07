@@ -548,7 +548,7 @@ function LyraSession() {
           )}
 
           {state === "results" && (
-            <div className="grid w-full grid-cols-1 gap-6 animate-[fade-in_0.6s_ease-out] lg:grid-cols-2 lg:gap-8">
+            <div className="grid w-full grid-cols-1 gap-6 animate-[fade-in_0.6s_ease-out] md:grid-cols-2 md:gap-8">
               <div className="w-full space-y-6">
               {/* Breathing orb tuned to returned BPM */}
               <div className="flex flex-col items-center">
