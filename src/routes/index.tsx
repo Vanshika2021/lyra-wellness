@@ -63,6 +63,7 @@ function LyraSession() {
   const [voiceLoading, setVoiceLoading] = useState(false);
   const [voiceError, setVoiceError] = useState<string | null>(null);
   const voiceAudiosRef = useRef<HTMLAudioElement[]>([]);
+  const clonedVoiceIdRef = useRef<string | null>(null);
   const playTimeoutsRef = useRef<number[]>([]);
   const fadeIntervalsRef = useRef<number[]>([]);
   const timerRef = useRef<number | null>(null);
