@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiAffirmationsRouteImport } from './routes/api/affirmations'
 import { Route as ApiScreenPhq9RouteImport } from './routes/api/screen/phq9'
 import { Route as ApiElevenlabsTtsRouteImport } from './routes/api/elevenlabs/tts'
 import { Route as ApiElevenlabsSttRouteImport } from './routes/api/elevenlabs/stt'
@@ -19,6 +20,11 @@ import { Route as ApiElevenlabsMusicRouteImport } from './routes/api/elevenlabs/
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAffirmationsRoute = ApiAffirmationsRouteImport.update({
+  id: '/api/affirmations',
+  path: '/api/affirmations',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiScreenPhq9Route = ApiScreenPhq9RouteImport.update({
@@ -49,6 +55,7 @@ const ApiElevenlabsMusicRoute = ApiElevenlabsMusicRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/affirmations': typeof ApiAffirmationsRoute
   '/api/elevenlabs/music': typeof ApiElevenlabsMusicRoute
   '/api/elevenlabs/reply': typeof ApiElevenlabsReplyRoute
   '/api/elevenlabs/stt': typeof ApiElevenlabsSttRoute
@@ -57,6 +64,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/affirmations': typeof ApiAffirmationsRoute
   '/api/elevenlabs/music': typeof ApiElevenlabsMusicRoute
   '/api/elevenlabs/reply': typeof ApiElevenlabsReplyRoute
   '/api/elevenlabs/stt': typeof ApiElevenlabsSttRoute
@@ -66,6 +74,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/affirmations': typeof ApiAffirmationsRoute
   '/api/elevenlabs/music': typeof ApiElevenlabsMusicRoute
   '/api/elevenlabs/reply': typeof ApiElevenlabsReplyRoute
   '/api/elevenlabs/stt': typeof ApiElevenlabsSttRoute
@@ -76,6 +85,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/api/affirmations'
     | '/api/elevenlabs/music'
     | '/api/elevenlabs/reply'
     | '/api/elevenlabs/stt'
@@ -84,6 +94,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/api/affirmations'
     | '/api/elevenlabs/music'
     | '/api/elevenlabs/reply'
     | '/api/elevenlabs/stt'
@@ -92,6 +103,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/api/affirmations'
     | '/api/elevenlabs/music'
     | '/api/elevenlabs/reply'
     | '/api/elevenlabs/stt'
@@ -101,6 +113,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiAffirmationsRoute: typeof ApiAffirmationsRoute
   ApiElevenlabsMusicRoute: typeof ApiElevenlabsMusicRoute
   ApiElevenlabsReplyRoute: typeof ApiElevenlabsReplyRoute
   ApiElevenlabsSttRoute: typeof ApiElevenlabsSttRoute
@@ -115,6 +128,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/affirmations': {
+      id: '/api/affirmations'
+      path: '/api/affirmations'
+      fullPath: '/api/affirmations'
+      preLoaderRoute: typeof ApiAffirmationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/screen/phq9': {
@@ -157,6 +177,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiAffirmationsRoute: ApiAffirmationsRoute,
   ApiElevenlabsMusicRoute: ApiElevenlabsMusicRoute,
   ApiElevenlabsReplyRoute: ApiElevenlabsReplyRoute,
   ApiElevenlabsSttRoute: ApiElevenlabsSttRoute,
@@ -166,13 +187,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
