@@ -5,6 +5,7 @@ import { BreathingOrb } from "@/components/lyra/BreathingOrb";
 import { Waveform } from "@/components/lyra/Waveform";
 import { MoodState } from "@/components/lyra/MoodState";
 import { AudioPlayer } from "@/components/lyra/AudioPlayer";
+import { HealingTrack } from "@/components/lyra/HealingTrack";
 import { extractVocalFeatures, buildMoodSignature, type MoodSignature, type VocalFeatures } from "@/lib/audio-features";
 import brainHeatmapHigh from "@/assets/brain-heatmap-high.png";
 import brainHeatmapMedium from "@/assets/brain-heatmap-medium.png";
@@ -38,6 +39,10 @@ function LyraSession() {
   const [processError, setProcessError] = useState<string | null>(null);
   const [mood, setMood] = useState<MoodSignature | null>(null);
   const [features, setFeatures] = useState<VocalFeatures | null>(null);
+  const [musicUrl, setMusicUrl] = useState<string | null>(null);
+  const [musicBpm, setMusicBpm] = useState<number | null>(null);
+  const [musicLoading, setMusicLoading] = useState(false);
+  const [musicError, setMusicError] = useState<string | null>(null);
   const timerRef = useRef<number | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -152,6 +157,11 @@ function LyraSession() {
       const { reply, audio_base64 } = (await replyRes.json()) as { reply: string; audio_base64: string };
       setReplyText(reply);
       setReplyAudioUrl(`data:audio/mpeg;base64,${audio_base64}`);
+
+      // Fire music generation (don't block results screen)
+      if (moodSig) {
+        void generateMusic(moodSig.distress);
+      }
     } catch (e) {
       setProcessError(e instanceof Error ? e.message : "Something went quiet. Please try again.");
     } finally {
@@ -169,6 +179,28 @@ function LyraSession() {
       setState("results");
     }
   }
+  async function generateMusic(distress: number) {
+    setMusicLoading(true);
+    setMusicError(null);
+    setMusicUrl(null);
+    setMusicBpm(null);
+    try {
+      const res = await fetch("/api/elevenlabs/music", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ distress }),
+      });
+      if (!res.ok) throw new Error((await res.json())?.error || "Music failed");
+      const { audio_base64, bpm } = (await res.json()) as { audio_base64: string; bpm: number };
+      setMusicUrl(`data:audio/mpeg;base64,${audio_base64}`);
+      setMusicBpm(bpm);
+    } catch (e) {
+      setMusicError(e instanceof Error ? e.message : "Couldn't compose your track.");
+    } finally {
+      setMusicLoading(false);
+    }
+  }
+
   function reset() {
     setElapsed(0);
     if (audioUrl) { URL.revokeObjectURL(audioUrl); setAudioUrl(null); }
@@ -178,6 +210,10 @@ function LyraSession() {
     setProcessError(null);
     setMood(null);
     setFeatures(null);
+    setMusicUrl(null);
+    setMusicBpm(null);
+    setMusicError(null);
+    setMusicLoading(false);
     setState("idle");
   }
 
@@ -364,6 +400,19 @@ function LyraSession() {
                   </div>
                 </div>
               </div>
+
+              {/* Healing track */}
+              {(musicLoading || musicUrl || musicError) && (
+                <HealingTrack
+                  loading={musicLoading}
+                  url={musicUrl}
+                  bpm={musicBpm}
+                  error={musicError}
+                  distress={mood?.distress ?? 0.5}
+                />
+              )}
+
+
 
               <div className="flex justify-center pt-2">
                 <button onClick={reset} className="rounded-full border border-border/60 bg-card/50 px-6 py-3 text-sm text-foreground backdrop-blur transition hover:bg-card">
