@@ -5,6 +5,7 @@ import { BreathingOrb } from "@/components/lyra/BreathingOrb";
 import { Waveform } from "@/components/lyra/Waveform";
 import { MoodState } from "@/components/lyra/MoodState";
 import { AudioPlayer } from "@/components/lyra/AudioPlayer";
+import { extractVocalFeatures, buildMoodSignature, type MoodSignature, type VocalFeatures } from "@/lib/audio-features";
 import brainHeatmap from "@/assets/brain-heatmap.jpg";
 
 export const Route = createFileRoute("/")({
