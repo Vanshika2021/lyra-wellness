@@ -218,30 +218,34 @@ function LyraSession() {
             </div>
           )}
 
-          {/* Action button */}
-          {state === "idle" && (
-            <div className="mt-10 flex flex-col items-center gap-3">
+          {/* Action button — hold to record */}
+          {(state === "idle" || state === "recording") && (
+            <div className="mt-10 flex flex-col items-center gap-3 select-none">
               <button
-                onClick={startRecording}
-                className="group inline-flex items-center gap-3 rounded-full bg-primary px-7 py-4 text-primary-foreground transition hover:scale-[1.02]"
+                onPointerDown={(e) => { e.preventDefault(); if (state === "idle") startRecording(); }}
+                onPointerUp={(e) => { e.preventDefault(); if (state === "recording") stopRecording(); }}
+                onPointerLeave={() => { if (state === "recording") stopRecording(); }}
+                onPointerCancel={() => { if (state === "recording") stopRecording(); }}
+                onContextMenu={(e) => e.preventDefault()}
+                className={`group inline-flex touch-none items-center gap-3 rounded-full px-7 py-4 transition ${
+                  state === "recording"
+                    ? "scale-105 bg-blush text-background"
+                    : "bg-primary text-primary-foreground hover:scale-[1.02]"
+                }`}
                 style={{ boxShadow: "var(--shadow-glow)" }}
               >
-                <Mic className="h-5 w-5" />
-                <span className="font-medium">Start a 60-second check-in</span>
+                {state === "recording" ? <Square className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+                <span className="font-medium">
+                  {state === "recording" ? "Release to finish" : "Hold to speak"}
+                </span>
               </button>
+              <p className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground">
+                {state === "recording" ? "Listening…" : "Press & hold · up to 60s"}
+              </p>
               {micError && (
                 <p className="max-w-xs text-center text-xs text-blush">{micError}</p>
               )}
             </div>
-          )}
-          {state === "recording" && (
-            <button
-              onClick={stopRecording}
-              className="mt-8 inline-flex items-center gap-3 rounded-full border border-border/70 bg-card/60 px-6 py-3 text-foreground backdrop-blur-xl transition hover:bg-card"
-            >
-              <Square className="h-4 w-4 fill-blush text-blush" />
-              <span>Finish early</span>
-            </button>
           )}
 
           {/* Results */}
