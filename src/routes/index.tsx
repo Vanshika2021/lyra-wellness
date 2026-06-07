@@ -496,7 +496,7 @@ function LyraSession() {
                     {affirmations.map((a, i) => (
                       <p
                         key={i}
-                        className="text-balance text-[2.25rem] italic leading-[1.3] text-foreground/90 sm:text-[3.25rem] sm:leading-[1.25]"
+                        className="text-balance text-[1.25rem] italic leading-[1.5] text-foreground/90 sm:text-[1.5rem] sm:leading-[1.45]"
                         style={{
                           fontFamily: '"Instrument Serif", Fraunces, Georgia, serif',
                           fontWeight: 400,
