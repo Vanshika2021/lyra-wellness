@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Mic, Square, Sparkles, Play, Pause } from "lucide-react";
+import { Mic, Square, Sparkles, Play, Pause, Maximize2, X } from "lucide-react";
 import { BreathingOrb } from "@/components/lyra/BreathingOrb";
 import { Waveform } from "@/components/lyra/Waveform";
 import { MoodState } from "@/components/lyra/MoodState";
@@ -69,6 +69,9 @@ function LyraSession() {
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const [neuralError, setNeuralError] = useState(false);
+  const [neuralFullscreen, setNeuralFullscreen] = useState(false);
+  const neuralWrapRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (state !== "recording") return;
@@ -555,6 +558,85 @@ function LyraSession() {
               <PHQ9Card result={phq9} loading={phq9Loading} error={phq9Error} crisis={crisis} />
 
               <TribeBrain mood={mood} features={features} />
+
+              {/* Neural Activity */}
+              {!neuralError && (
+                <div
+                  ref={neuralWrapRef}
+                  className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#080810] p-4 backdrop-blur-xl sm:p-6"
+                  style={{
+                    boxShadow: "0 0 0 1px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.03)",
+                  }}
+                >
+                  <div className="mb-4 flex items-center justify-between">
+                    <p
+                      className="text-balance text-sm italic leading-relaxed text-foreground/70 sm:text-base"
+                      style={{ fontFamily: '"Instrument Serif", Fraunces, Georgia, serif', letterSpacing: "0.01em" }}
+                    >
+                      How your mind responded
+                    </p>
+                    <button
+                      onClick={() => setNeuralFullscreen(true)}
+                      className="rounded-full border border-white/10 bg-white/5 p-2 text-muted-foreground transition hover:bg-white/10 hover:text-foreground"
+                      aria-label="Expand neural activity"
+                      title="Expand"
+                    >
+                      <Maximize2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <div className="relative w-full overflow-hidden rounded-2xl border border-white/[0.06]">
+                    <iframe
+                      src="https://fxlysgacizwmecgbhjzs.supabase.co/storage/v1/object/public/tracks/tribe_demo_hardcoded.html"
+                      className="h-[70vh] w-full sm:h-[640px]"
+                      style={{ border: "none", display: "block" }}
+                      loading="lazy"
+                      onError={() => setNeuralError(true)}
+                      allow="fullscreen"
+                      title="Neural activity visualization"
+                    />
+                  </div>
+                  <p className="mt-4 text-[11px] leading-relaxed text-muted-foreground/60 sm:text-xs">
+                    Different regions of your brain light up as they respond — calming, reflecting, and easing.
+                  </p>
+                </div>
+              )}
+
+              {/* Neural fullscreen overlay */}
+              {neuralFullscreen && (
+                <div
+                  className="fixed inset-0 z-50 flex flex-col bg-[#080810]/95 backdrop-blur-xl"
+                  onClick={(e) => {
+                    if (e.target === e.currentTarget) setNeuralFullscreen(false);
+                  }}
+                >
+                  <div className="flex items-center justify-between px-6 py-4">
+                    <p
+                      className="text-sm italic text-foreground/80"
+                      style={{ fontFamily: '"Instrument Serif", Fraunces, Georgia, serif' }}
+                    >
+                      How your mind responded
+                    </p>
+                    <button
+                      onClick={() => setNeuralFullscreen(false)}
+                      className="rounded-full border border-white/10 bg-white/5 p-2 text-muted-foreground transition hover:bg-white/10 hover:text-foreground"
+                      aria-label="Close fullscreen"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <div className="flex-1 px-4 pb-4 sm:px-6 sm:pb-6">
+                    <iframe
+                      src="https://fxlysgacizwmecgbhjzs.supabase.co/storage/v1/object/public/tracks/tribe_demo_hardcoded.html"
+                      className="h-full w-full rounded-2xl border border-white/[0.06]"
+                      style={{ border: "none", display: "block" }}
+                      loading="lazy"
+                      onError={() => { setNeuralFullscreen(false); setNeuralError(true); }}
+                      allow="fullscreen"
+                      title="Neural activity visualization fullscreen"
+                    />
+                  </div>
+                </div>
+              )}
 
               <div className="flex justify-center pt-2">
                 <button onClick={reset} className="rounded-full border border-border/60 bg-card/50 px-6 py-3 text-sm text-foreground backdrop-blur transition hover:bg-card">
