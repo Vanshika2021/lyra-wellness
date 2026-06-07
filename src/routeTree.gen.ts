@@ -104,6 +104,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/screen/phq9': {
+      id: '/api/screen/phq9'
+      path: '/api/screen/phq9'
+      fullPath: '/api/screen/phq9'
+      preLoaderRoute: typeof ApiScreenPhq9RouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/elevenlabs/stt': {
       id: '/api/elevenlabs/stt'
       path: '/api/elevenlabs/stt'
@@ -125,13 +132,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiElevenlabsMusicRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/screen/phq9': {
-      id: '/api/screen/phq9'
-      path: '/api/screen/phq9'
-      fullPath: '/api/screen/phq9'
-      preLoaderRoute: typeof ApiScreenPhq9RouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
@@ -145,13 +145,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

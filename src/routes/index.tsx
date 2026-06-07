@@ -7,6 +7,7 @@ import { MoodState } from "@/components/lyra/MoodState";
 import { IntegratedHealing } from "@/components/lyra/IntegratedHealing";
 import { extractVocalFeatures, buildMoodSignature, type MoodSignature, type VocalFeatures } from "@/lib/audio-features";
 import TribeBrain from "@/components/lyra/TribeBrain";
+import { PHQ9Card, type PHQ9Result } from "@/components/lyra/PHQ9Card";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -40,6 +41,10 @@ function LyraSession() {
   const [musicBpm, setMusicBpm] = useState<number | null>(null);
   const [musicLoading, setMusicLoading] = useState(false);
   const [musicError, setMusicError] = useState<string | null>(null);
+  const [phq9, setPhq9] = useState<PHQ9Result | null>(null);
+  const [phq9Loading, setPhq9Loading] = useState(false);
+  const [phq9Error, setPhq9Error] = useState<string | null>(null);
+  const [crisis, setCrisis] = useState(false);
   const timerRef = useRef<number | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
