@@ -174,6 +174,8 @@ function LyraSession() {
     setTranscript("");
     setReplyText("");
     setProcessError(null);
+    setMood(null);
+    setFeatures(null);
     setState("idle");
   }
 
