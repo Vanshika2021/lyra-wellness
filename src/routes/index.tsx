@@ -1,29 +1,198 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useRef, useState } from "react";
+import { Mic, Square, Sparkles } from "lucide-react";
+import { BreathingOrb } from "@/components/lyra/BreathingOrb";
+import { Waveform } from "@/components/lyra/Waveform";
+import { MoodState } from "@/components/lyra/MoodState";
+import { AudioPlayer } from "@/components/lyra/AudioPlayer";
+import brainHeatmap from "@/assets/brain-heatmap.jpg";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Your App" },
-      { name: "description", content: "Replace this with a one-sentence description of your app." },
-      { property: "og:title", content: "Your App" },
-      { property: "og:description", content: "Replace this with a one-sentence description of your app." },
+      { title: "Lyra — Your safe space" },
+      { name: "description", content: "A calming voice companion for women navigating PMDD. Record, reflect, and feel held." },
+      { property: "og:title", content: "Lyra — Your safe space" },
+      { property: "og:description", content: "A calming voice companion for women navigating PMDD." },
     ],
   }),
-  component: Index,
+  component: LyraSession,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
+type State = "idle" | "recording" | "processing" | "results";
+
+const MAX_SECONDS = 60;
+
+function LyraSession() {
+  const [state, setState] = useState<State>("idle");
+  const [elapsed, setElapsed] = useState(0);
+  const timerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (state === "recording") {
+      timerRef.current = window.setInterval(() => {
+        setElapsed((v) => {
+          if (v + 1 >= MAX_SECONDS) { stopRecording(); return MAX_SECONDS; }
+          return v + 1;
+        });
+      }, 1000);
+    }
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state]);
+
+  function startRecording() { setElapsed(0); setState("recording"); }
+  function stopRecording() {
+    if (timerRef.current) clearInterval(timerRef.current);
+    setState("processing");
+    setTimeout(() => setState("results"), 2600);
+  }
+  function reset() { setElapsed(0); setState("idle"); }
+
+  const remaining = MAX_SECONDS - elapsed;
+  const fmt = (s: number) => `0:${String(s).padStart(2, "0")}`;
+
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+    <main className="relative min-h-screen overflow-hidden">
+      {/* aurora background */}
+      <div className="absolute inset-0 -z-10" style={{ background: "var(--gradient-aurora)" }} />
+      <div className="absolute inset-0 -z-10 opacity-[0.04]" style={{
+        backgroundImage: "radial-gradient(circle at 1px 1px, white 1px, transparent 0)",
+        backgroundSize: "32px 32px",
+      }} />
+
+      <div className="mx-auto flex min-h-screen max-w-2xl flex-col px-6 py-10 sm:py-14">
+        {/* Header */}
+        <header className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="grid h-9 w-9 place-items-center rounded-full" style={{ background: "var(--gradient-orb)" }} />
+            <span className="font-display text-xl tracking-wide text-foreground">Lyra</span>
+          </div>
+          <span className="rounded-full border border-border/60 bg-card/50 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-muted-foreground backdrop-blur">
+            Session · today
+          </span>
+        </header>
+
+        {/* Greeting */}
+        <section className="mt-10 text-center sm:mt-14">
+          <h1 className="font-display text-4xl leading-[1.1] text-foreground sm:text-5xl">
+            Hi, how are you<br />
+            <em className="not-italic" style={{
+              background: "linear-gradient(90deg, var(--lavender), var(--blush), var(--amber-glow))",
+              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+            }}>feeling today?</em>
+          </h1>
+          <p className="mt-4 text-sm text-muted-foreground sm:text-base">
+            This is your safe space. Speak freely — Lyra is listening.
+          </p>
+        </section>
+
+        {/* Stage */}
+        <section className="relative mt-10 flex flex-1 flex-col items-center justify-center">
+          {/* Breathing orb stage — idle / recording / processing */}
+          {state !== "results" && (
+            <div className="relative flex flex-col items-center" style={{ animation: "float-slow 6s ease-in-out infinite" }}>
+              <BreathingOrb active size={260} />
+              {state === "idle" && (
+                <p className="mt-2 text-xs uppercase tracking-[0.3em] text-muted-foreground">Breathe · in · out</p>
+              )}
+              {state === "recording" && (
+                <div className="mt-4 flex flex-col items-center gap-3">
+                  <Waveform active />
+                  <div className="flex items-center gap-3">
+                    <span className="h-2 w-2 animate-pulse rounded-full bg-blush" />
+                    <span className="font-mono text-2xl tabular-nums text-foreground">{fmt(remaining)}</span>
+                  </div>
+                </div>
+              )}
+              {state === "processing" && (
+                <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
+                  <Sparkles className="h-4 w-4 animate-pulse text-primary" />
+                  <span className="font-display italic">Listening with care…</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Action button */}
+          {state === "idle" && (
+            <button
+              onClick={startRecording}
+              className="group mt-10 inline-flex items-center gap-3 rounded-full bg-primary px-7 py-4 text-primary-foreground transition hover:scale-[1.02]"
+              style={{ boxShadow: "var(--shadow-glow)" }}
+            >
+              <Mic className="h-5 w-5" />
+              <span className="font-medium">Start a 60-second check-in</span>
+            </button>
+          )}
+          {state === "recording" && (
+            <button
+              onClick={stopRecording}
+              className="mt-8 inline-flex items-center gap-3 rounded-full border border-border/70 bg-card/60 px-6 py-3 text-foreground backdrop-blur-xl transition hover:bg-card"
+            >
+              <Square className="h-4 w-4 fill-blush text-blush" />
+              <span>Finish early</span>
+            </button>
+          )}
+
+          {/* Results */}
+          {state === "results" && (
+            <div className="w-full space-y-6 animate-[fade-in_0.6s_ease-out]">
+              <div className="rounded-3xl border border-border/60 bg-card/60 p-6 backdrop-blur-xl" style={{ boxShadow: "var(--shadow-soft)" }}>
+                <div className="mb-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Your reflection</p>
+                    <p className="mt-1 font-display text-xl text-foreground">A gentle reply, just for you</p>
+                  </div>
+                  <Sparkles className="h-5 w-5 text-primary" />
+                </div>
+                <AudioPlayer duration={42} />
+                <p className="mt-5 text-sm leading-relaxed text-muted-foreground">
+                  "I hear that today feels heavy. Let's breathe together for a moment — your body is asking for softness, not solutions."
+                </p>
+              </div>
+
+              <MoodState distress={0.68} arousal={0.41} />
+
+              <div className="overflow-hidden rounded-3xl border border-border/60 bg-card/60 backdrop-blur-xl" style={{ boxShadow: "var(--shadow-soft)" }}>
+                <div className="flex items-center justify-between px-6 pt-5">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Predicted brain response</p>
+                    <p className="mt-1 font-display text-xl text-foreground">Limbic warmth, calming cortex</p>
+                  </div>
+                  <span className="rounded-full bg-secondary/70 px-3 py-1 text-[10px] uppercase tracking-widest text-muted-foreground">Model · v0.2</span>
+                </div>
+                <div className="relative mt-5 aspect-[16/10] w-full">
+                  <img src={brainHeatmap} alt="Predicted brain activation heatmap" loading="lazy" width={1280} height={768} className="h-full w-full object-cover" />
+                  <div className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(180deg, transparent 40%, oklch(0.18 0.04 270 / 0.85))" }} />
+                  <div className="absolute bottom-4 left-6 right-6 flex flex-wrap gap-2">
+                    {[
+                      { c: "var(--lavender)", t: "Prefrontal · soothing" },
+                      { c: "var(--blush)", t: "Amygdala · tender" },
+                      { c: "var(--amber-glow)", t: "Insula · warming" },
+                    ].map((p) => (
+                      <span key={p.t} className="flex items-center gap-2 rounded-full border border-border/60 bg-background/60 px-3 py-1 text-xs text-foreground backdrop-blur">
+                        <span className="h-2 w-2 rounded-full" style={{ background: p.c, boxShadow: `0 0 10px ${p.c}` }} />
+                        {p.t}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-center pt-2">
+                <button onClick={reset} className="rounded-full border border-border/60 bg-card/50 px-6 py-3 text-sm text-foreground backdrop-blur transition hover:bg-card">
+                  Begin another check-in
+                </button>
+              </div>
+            </div>
+          )}
+        </section>
+
+        <footer className="mt-12 text-center text-[10px] uppercase tracking-[0.25em] text-muted-foreground/70">
+          Lyra · made with care for cycles
+        </footer>
+      </div>
+    </main>
   );
 }
