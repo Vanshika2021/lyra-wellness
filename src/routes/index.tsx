@@ -178,6 +178,28 @@ function LyraSession() {
       setState("results");
     }
   }
+  async function generateMusic(distress: number) {
+    setMusicLoading(true);
+    setMusicError(null);
+    setMusicUrl(null);
+    setMusicBpm(null);
+    try {
+      const res = await fetch("/api/elevenlabs/music", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ distress }),
+      });
+      if (!res.ok) throw new Error((await res.json())?.error || "Music failed");
+      const { audio_base64, bpm } = (await res.json()) as { audio_base64: string; bpm: number };
+      setMusicUrl(`data:audio/mpeg;base64,${audio_base64}`);
+      setMusicBpm(bpm);
+    } catch (e) {
+      setMusicError(e instanceof Error ? e.message : "Couldn't compose your track.");
+    } finally {
+      setMusicLoading(false);
+    }
+  }
+
   function reset() {
     setElapsed(0);
     if (audioUrl) { URL.revokeObjectURL(audioUrl); setAudioUrl(null); }
@@ -187,6 +209,10 @@ function LyraSession() {
     setProcessError(null);
     setMood(null);
     setFeatures(null);
+    setMusicUrl(null);
+    setMusicBpm(null);
+    setMusicError(null);
+    setMusicLoading(false);
     setState("idle");
   }
 
