@@ -60,6 +60,11 @@ function LyraSession() {
   const [phq9Loading, setPhq9Loading] = useState(false);
   const [phq9Error, setPhq9Error] = useState<string | null>(null);
   const [crisis, setCrisis] = useState(false);
+  const [voiceLoading, setVoiceLoading] = useState(false);
+  const [voiceError, setVoiceError] = useState<string | null>(null);
+  const voiceAudiosRef = useRef<HTMLAudioElement[]>([]);
+  const playTimeoutsRef = useRef<number[]>([]);
+  const fadeIntervalsRef = useRef<number[]>([]);
   const timerRef = useRef<number | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
