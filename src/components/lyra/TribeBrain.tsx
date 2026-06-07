@@ -245,37 +245,51 @@ export default function TribeBrain({ mood, features }: Props) {
 
       {/* Region read-out */}
       <div className="grid grid-cols-1 gap-2 px-6 py-5 sm:grid-cols-2">
-        {regions.map((r) => (
-          <div
-            key={r.id}
-            className="flex items-center gap-3 rounded-2xl border border-border/50 bg-background/40 p-3"
-          >
-            <span
-              className="h-2.5 w-2.5 shrink-0 rounded-full"
-              style={{ background: r.color, boxShadow: `0 0 10px ${r.color}` }}
-            />
-            <div className="min-w-0 flex-1">
-              <div className="flex items-baseline justify-between gap-2">
-                <p className="truncate text-sm text-foreground">{r.name}</p>
-                <p className="font-mono text-xs tabular-nums text-muted-foreground">
-                  {Math.round(r.activation * 100)}%
+        {regions.map((r) => {
+          const lvl = activationLabel(r.activation);
+          return (
+            <div
+              key={r.id}
+              className="flex items-start gap-3 rounded-2xl border border-border/50 bg-background/40 p-3"
+            >
+              <span
+                className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full"
+                style={{ background: r.color, boxShadow: `0 0 10px ${r.color}` }}
+              />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-baseline justify-between gap-2">
+                  <p className="truncate text-sm text-foreground">{r.name}</p>
+                  <p className="font-mono text-xs tabular-nums text-muted-foreground">
+                    {Math.round(r.activation * 100)}%
+                  </p>
+                </div>
+                <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-border/40">
+                  <div
+                    className="h-full rounded-full transition-all duration-700"
+                    style={{ width: `${Math.round(r.activation * 100)}%`, background: r.color }}
+                  />
+                </div>
+                <div className="mt-2 flex items-center gap-2">
+                  <span
+                    className="rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wider"
+                    style={{ background: `color-mix(in oklab, ${lvl.tone} 18%, transparent)`, color: lvl.tone }}
+                  >
+                    {lvl.label}
+                  </span>
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70">
+                    {r.role}
+                  </span>
+                </div>
+                <p className="mt-2 text-[12px] leading-relaxed text-foreground/75">
+                  {r.meaning}
+                </p>
+                <p className="mt-1 text-[10px] uppercase tracking-wider text-muted-foreground/60">
+                  Signal: {r.driver}
                 </p>
               </div>
-              <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-border/40">
-                <div
-                  className="h-full rounded-full transition-all duration-700"
-                  style={{ width: `${Math.round(r.activation * 100)}%`, background: r.color }}
-                />
-              </div>
-              <p className="mt-1 text-[10px] uppercase tracking-wider text-muted-foreground/70">
-                {r.role}
-              </p>
-              <p className="mt-0.5 text-[11px] text-muted-foreground/80">
-                driven by {r.driver}
-              </p>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
