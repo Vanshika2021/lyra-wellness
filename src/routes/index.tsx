@@ -301,7 +301,26 @@ function LyraSession() {
                 )}
               </div>
 
-              <MoodState distress={0.68} arousal={0.41} />
+              <MoodState distress={mood?.distress ?? 0.5} arousal={mood?.arousal ?? 0.5} />
+              {features && (
+                <div className="rounded-3xl border border-border/60 bg-card/60 p-5 backdrop-blur-xl" style={{ boxShadow: "var(--shadow-soft)" }}>
+                  <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Voice signature</p>
+                  <p className="mt-2 text-sm leading-relaxed text-foreground/90">{mood?.descriptor}</p>
+                  <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    {[
+                      { k: "Pitch", v: features.pitchMeanHz ? `${Math.round(features.pitchMeanHz)} Hz` : "—" },
+                      { k: "Intonation", v: features.pitchVarHz ? `±${Math.round(features.pitchVarHz)} Hz` : "—" },
+                      { k: "Pace", v: features.speechRateWps ? `${features.speechRateWps.toFixed(1)} w/s` : "—" },
+                      { k: "Pauses", v: `${Math.round(features.pauseRatio * 100)}%` },
+                    ].map((m) => (
+                      <div key={m.k} className="rounded-2xl border border-border/50 bg-background/40 p-3">
+                        <p className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground/80">{m.k}</p>
+                        <p className="mt-1 font-mono text-sm text-foreground tabular-nums">{m.v}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="overflow-hidden rounded-3xl border border-border/60 bg-card/60 backdrop-blur-xl" style={{ boxShadow: "var(--shadow-soft)" }}>
                 <div className="flex items-center justify-between px-6 pt-5">
