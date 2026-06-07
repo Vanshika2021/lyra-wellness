@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Mic, Square, Sparkles, Play, Pause } from "lucide-react";
+import { Mic, Square, Sparkles, Play, Pause, Maximize2, X } from "lucide-react";
 import { BreathingOrb } from "@/components/lyra/BreathingOrb";
 import { Waveform } from "@/components/lyra/Waveform";
 import { MoodState } from "@/components/lyra/MoodState";
@@ -69,6 +69,9 @@ function LyraSession() {
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const [neuralError, setNeuralError] = useState(false);
+  const [neuralFullscreen, setNeuralFullscreen] = useState(false);
+  const neuralWrapRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (state !== "recording") return;
