@@ -164,6 +164,9 @@ function LyraSession() {
       if (moodSig) {
         void generateMusic(moodSig.distress);
       }
+
+      // Fire PHQ-9 screening in parallel
+      void screenPhq9(safeText);
     } catch (e) {
       setProcessError(e instanceof Error ? e.message : "Something went quiet. Please try again.");
     } finally {
@@ -203,6 +206,31 @@ function LyraSession() {
     }
   }
 
+  async function screenPhq9(text: string) {
+    setPhq9(null);
+    setPhq9Error(null);
+    setCrisis(false);
+    setPhq9Loading(true);
+    try {
+      const res = await fetch("/api/screen/phq9", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ transcript: text }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        if (json?.crisis) setCrisis(true);
+        throw new Error(json?.error || "Screening failed");
+      }
+      setCrisis(Boolean(json?.crisis));
+      setPhq9(json?.screening ?? null);
+    } catch (e) {
+      setPhq9Error(e instanceof Error ? e.message : "Couldn't complete wellness insight.");
+    } finally {
+      setPhq9Loading(false);
+    }
+  }
+
   function reset() {
     setElapsed(0);
     if (audioUrl) { URL.revokeObjectURL(audioUrl); setAudioUrl(null); }
@@ -216,6 +244,10 @@ function LyraSession() {
     setMusicBpm(null);
     setMusicError(null);
     setMusicLoading(false);
+    setPhq9(null);
+    setPhq9Error(null);
+    setPhq9Loading(false);
+    setCrisis(false);
     setState("idle");
   }
 
