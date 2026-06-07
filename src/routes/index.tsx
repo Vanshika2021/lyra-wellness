@@ -5,6 +5,7 @@ import { BreathingOrb } from "@/components/lyra/BreathingOrb";
 import { Waveform } from "@/components/lyra/Waveform";
 import { MoodState } from "@/components/lyra/MoodState";
 import { AudioPlayer } from "@/components/lyra/AudioPlayer";
+import { extractVocalFeatures, buildMoodSignature, type MoodSignature, type VocalFeatures } from "@/lib/audio-features";
 import brainHeatmap from "@/assets/brain-heatmap.jpg";
 
 export const Route = createFileRoute("/")({
@@ -33,6 +34,8 @@ function LyraSession() {
   const [replyText, setReplyText] = useState<string>("");
   const [replyAudioUrl, setReplyAudioUrl] = useState<string | null>(null);
   const [processError, setProcessError] = useState<string | null>(null);
+  const [mood, setMood] = useState<MoodSignature | null>(null);
+  const [features, setFeatures] = useState<VocalFeatures | null>(null);
   const timerRef = useRef<number | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -106,9 +109,17 @@ function LyraSession() {
     setProcessError(null);
     setTranscript("");
     setReplyText("");
+    setMood(null);
+    setFeatures(null);
     if (replyAudioUrl) { URL.revokeObjectURL(replyAudioUrl); setReplyAudioUrl(null); }
 
     try {
+      // Kick off feature extraction in parallel with STT — pure client-side, no extra latency on the server side
+      const featuresPromise = extractVocalFeatures(blob).catch((err) => {
+        console.warn("vocal feature extraction failed", err);
+        return null;
+      });
+
       const fd = new FormData();
       fd.append("audio", blob, "recording.webm");
       const sttRes = await fetch("/api/elevenlabs/stt", { method: "POST", body: fd });
@@ -117,10 +128,23 @@ function LyraSession() {
       const safeText = (text || "").trim() || "(I couldn't quite catch your words — I'm still here with you.)";
       setTranscript(safeText);
 
+      const feats = await featuresPromise;
+      let moodSig: MoodSignature | null = null;
+      if (feats) {
+        moodSig = buildMoodSignature(feats, safeText);
+        setFeatures(feats);
+        setMood(moodSig);
+      }
+
       const replyRes = await fetch("/api/elevenlabs/reply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ transcript: safeText }),
+        body: JSON.stringify({
+          transcript: safeText,
+          vocalMood: moodSig?.descriptor,
+          distress: moodSig?.distress,
+          arousal: moodSig?.arousal,
+        }),
       });
       if (!replyRes.ok) throw new Error((await replyRes.json())?.error || "Reply failed");
       const { reply, audio_base64 } = (await replyRes.json()) as { reply: string; audio_base64: string };
@@ -150,6 +174,8 @@ function LyraSession() {
     setTranscript("");
     setReplyText("");
     setProcessError(null);
+    setMood(null);
+    setFeatures(null);
     setState("idle");
   }
 
@@ -275,7 +301,26 @@ function LyraSession() {
                 )}
               </div>
 
-              <MoodState distress={0.68} arousal={0.41} />
+              <MoodState distress={mood?.distress ?? 0.5} arousal={mood?.arousal ?? 0.5} />
+              {features && (
+                <div className="rounded-3xl border border-border/60 bg-card/60 p-5 backdrop-blur-xl" style={{ boxShadow: "var(--shadow-soft)" }}>
+                  <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Voice signature</p>
+                  <p className="mt-2 text-sm leading-relaxed text-foreground/90">{mood?.descriptor}</p>
+                  <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    {[
+                      { k: "Pitch", v: features.pitchMeanHz ? `${Math.round(features.pitchMeanHz)} Hz` : "—" },
+                      { k: "Intonation", v: features.pitchVarHz ? `±${Math.round(features.pitchVarHz)} Hz` : "—" },
+                      { k: "Pace", v: features.speechRateWps ? `${features.speechRateWps.toFixed(1)} w/s` : "—" },
+                      { k: "Pauses", v: `${Math.round(features.pauseRatio * 100)}%` },
+                    ].map((m) => (
+                      <div key={m.k} className="rounded-2xl border border-border/50 bg-background/40 p-3">
+                        <p className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground/80">{m.k}</p>
+                        <p className="mt-1 font-mono text-sm text-foreground tabular-nums">{m.v}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="overflow-hidden rounded-3xl border border-border/60 bg-card/60 backdrop-blur-xl" style={{ boxShadow: "var(--shadow-soft)" }}>
                 <div className="flex items-center justify-between px-6 pt-5">
