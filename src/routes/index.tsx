@@ -29,6 +29,10 @@ function LyraSession() {
   const [micError, setMicError] = useState<string | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [recordedSeconds, setRecordedSeconds] = useState(42);
+  const [transcript, setTranscript] = useState<string>("");
+  const [replyText, setReplyText] = useState<string>("");
+  const [replyAudioUrl, setReplyAudioUrl] = useState<string | null>(null);
+  const [processError, setProcessError] = useState<string | null>(null);
   const timerRef = useRef<number | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -76,14 +80,14 @@ function LyraSession() {
       const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
       chunksRef.current = [];
       recorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
-      recorder.onstop = () => {
+      recorder.onstop = async () => {
         const blob = new Blob(chunksRef.current, { type: mimeType || "audio/webm" });
         const url = URL.createObjectURL(blob);
         setAudioUrl(url);
         streamRef.current?.getTracks().forEach((t) => t.stop());
         streamRef.current = null;
         setState("processing");
-        setTimeout(() => setState("results"), 2600);
+        await processRecording(blob);
       };
       recorderRef.current = recorder;
       recorder.start(250);
@@ -98,20 +102,54 @@ function LyraSession() {
     }
   }
 
+  async function processRecording(blob: Blob) {
+    setProcessError(null);
+    setTranscript("");
+    setReplyText("");
+    if (replyAudioUrl) { URL.revokeObjectURL(replyAudioUrl); setReplyAudioUrl(null); }
+
+    try {
+      const fd = new FormData();
+      fd.append("audio", blob, "recording.webm");
+      const sttRes = await fetch("/api/elevenlabs/stt", { method: "POST", body: fd });
+      if (!sttRes.ok) throw new Error((await sttRes.json())?.error || "Transcription failed");
+      const { text } = (await sttRes.json()) as { text: string };
+      const safeText = (text || "").trim() || "(I couldn't quite catch your words — I'm still here with you.)";
+      setTranscript(safeText);
+
+      const replyRes = await fetch("/api/elevenlabs/reply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ transcript: safeText }),
+      });
+      if (!replyRes.ok) throw new Error((await replyRes.json())?.error || "Reply failed");
+      const { reply, audio_base64 } = (await replyRes.json()) as { reply: string; audio_base64: string };
+      setReplyText(reply);
+      setReplyAudioUrl(`data:audio/mpeg;base64,${audio_base64}`);
+    } catch (e) {
+      setProcessError(e instanceof Error ? e.message : "Something went quiet. Please try again.");
+    } finally {
+      setState("results");
+    }
+  }
+
   function stopRecording() {
     if (timerRef.current) clearInterval(timerRef.current);
     setRecordedSeconds(Math.max(1, elapsed || 1));
     const r = recorderRef.current;
     if (r && r.state !== "inactive") {
-      r.stop(); // onstop transitions to processing → results
+      r.stop(); // onstop runs processRecording → results
     } else {
-      setState("processing");
-      setTimeout(() => setState("results"), 2600);
+      setState("results");
     }
   }
   function reset() {
     setElapsed(0);
     if (audioUrl) { URL.revokeObjectURL(audioUrl); setAudioUrl(null); }
+    if (replyAudioUrl) { URL.revokeObjectURL(replyAudioUrl); setReplyAudioUrl(null); }
+    setTranscript("");
+    setReplyText("");
+    setProcessError(null);
     setState("idle");
   }
 
