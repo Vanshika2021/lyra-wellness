@@ -433,6 +433,7 @@ function LyraSession() {
   const ambientRef = useRef<HTMLVideoElement | null>(null);
   const showAmbient = state === "results" && musicPlaying;
   const autoStartedRef = useRef(false);
+  const scheduledRef = useRef(false);
 
   useEffect(() => {
     const el = ambientRef.current;
@@ -447,16 +448,33 @@ function LyraSession() {
       const el = musicRef.current;
       if (el && musicUrl) {
         el.volume = 0.65;
-        el.play().then(() => {
-          scheduleAffirmations();
-        }).catch(() => {});
+        el.play().catch(() => {});
       }
     }
     if (state !== "results") {
       autoStartedRef.current = false;
+      scheduledRef.current = false;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state, musicUrl]);
+
+  // Schedule spoken affirmations as soon as the TTS clips finish loading
+  // (auto-play above fires before they're ready, so voices.length is 0 then).
+  useEffect(() => {
+    if (state !== "results") return;
+    if (voiceLoading) return;
+    if (scheduledRef.current) return;
+    if (voiceAudiosRef.current.length === 0) return;
+    if (!musicRef.current) return;
+    scheduledRef.current = true;
+    if (musicRef.current.paused) {
+      musicRef.current.volume = 0.65;
+      musicRef.current.play().catch(() => {});
+    }
+    scheduleAffirmations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state, voiceLoading, affirmations]);
+
 
   return (
     <main className="relative min-h-screen overflow-hidden">
