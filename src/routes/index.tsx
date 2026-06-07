@@ -7,6 +7,17 @@ import { MoodState } from "@/components/lyra/MoodState";
 import type { MoodSignature, VocalFeatures } from "@/lib/audio-features";
 import TribeBrain from "@/components/lyra/TribeBrain";
 import { PHQ9Card, type PHQ9Result } from "@/components/lyra/PHQ9Card";
+import ambientCalm from "@/assets/ambient-calm.mp4.asset.json";
+import ambientWarm from "@/assets/ambient-warm.mp4.asset.json";
+import ambientGrounded from "@/assets/ambient-grounded.mp4.asset.json";
+import ambientNight from "@/assets/ambient-night.mp4.asset.json";
+
+function pickAmbient(distress: number, arousal: number): string {
+  // High distress → comforting warmth or quieting night depending on energy
+  if (distress >= 0.6) return arousal >= 0.55 ? ambientWarm.url : ambientNight.url;
+  // Lower distress → calm water for energetic, grounded forest for low-energy
+  return arousal >= 0.55 ? ambientCalm.url : ambientGrounded.url;
+}
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -411,9 +422,42 @@ function LyraSession() {
   const remaining = MAX_SECONDS - elapsed;
   const fmt = (s: number) => `0:${String(s).padStart(2, "0")}`;
 
+  const ambientSrc = pickAmbient(mood?.distress ?? 0.5, mood?.arousal ?? 0.5);
+  const ambientRef = useRef<HTMLVideoElement | null>(null);
+  const showAmbient = state === "results" && musicPlaying;
+  useEffect(() => {
+    const el = ambientRef.current;
+    if (!el) return;
+    if (showAmbient) { el.play().catch(() => {}); }
+    else { el.pause(); }
+  }, [showAmbient, ambientSrc]);
+
   return (
     <main className="relative min-h-screen overflow-hidden">
-      <div className="absolute inset-0 -z-10" style={{ background: "var(--gradient-aurora)" }} />
+      {/* Mood-tuned ambient backdrop — plays only while the affirmation track is playing */}
+      <div
+        className="pointer-events-none fixed inset-0 -z-20 transition-opacity duration-[1600ms] ease-out"
+        style={{ opacity: showAmbient ? 1 : 0 }}
+        aria-hidden="true"
+      >
+        <video
+          ref={ambientRef}
+          src={ambientSrc}
+          muted
+          loop
+          playsInline
+          preload="auto"
+          className="h-full w-full object-cover"
+          style={{ filter: "blur(2px) saturate(1.05)" }}
+        />
+        {/* Soft scrim so foreground text stays readable */}
+        <div
+          className="absolute inset-0"
+          style={{ background: "radial-gradient(ellipse at center, rgba(8,8,16,0.35), rgba(8,8,16,0.72))" }}
+        />
+      </div>
+
+      <div className="absolute inset-0 -z-10" style={{ background: "var(--gradient-aurora)", opacity: showAmbient ? 0.35 : 1, transition: "opacity 1.6s ease-out" }} />
       <div className="absolute inset-0 -z-10 opacity-[0.04]" style={{
         backgroundImage: "radial-gradient(circle at 1px 1px, white 1px, transparent 0)",
         backgroundSize: "32px 32px",
