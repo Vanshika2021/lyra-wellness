@@ -170,9 +170,11 @@ function LyraSession() {
       setFeatures(null); // server-side state replaces local feature extraction
       setBpm(data.bpm ?? null);
       setMusicUrl(data.musicUrl ?? null);
-      setAffirmations(Array.isArray(data.affirmations) ? data.affirmations.slice(0, 2) : []);
+      const affs = Array.isArray(data.affirmations) ? data.affirmations.slice(0, 2) : [];
+      setAffirmations(affs);
 
       void screenPhq9(safeText);
+      void loadAffirmationVoices(affs);
     } catch (e) {
       setProcessError(e instanceof Error ? e.message : "Something went quiet. Please try again.");
     } finally {
