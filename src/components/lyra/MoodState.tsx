@@ -74,12 +74,20 @@ function RadialGauge({
   const arcLength = circumference * 0.75; // 270-degree arc
   const gap = circumference - arcLength;
   const offset = gap / 2 + circumference * 0.125; // start at 135 degrees
-  const dashOffset = arcLength - (value * arcLength);
+
+  // Dot position at the end of the active arc
+  const angleDeg = 135 + value * 270;
+  const angleRad = ((angleDeg - 90) * Math.PI) / 180;
+  const dotX = cx + r * Math.cos(angleRad);
+  const dotY = cy + r * Math.sin(angleRad);
 
   const gradientId = `grad-${title.replace(/\s/g, "")}`;
 
   return (
-    <div className="overflow-hidden rounded-3xl border border-border/60 bg-card/60 p-5 backdrop-blur-xl" style={{ boxShadow: "var(--shadow-soft)" }}>
+    <div
+      className="overflow-hidden rounded-3xl border border-border/60 bg-card/60 p-5 backdrop-blur-xl"
+      style={{ boxShadow: "var(--shadow-soft)" }}
+    >
       <div className="flex items-start justify-between">
         <div>
           <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">{title}</p>
@@ -144,21 +152,18 @@ function RadialGauge({
             style={{ transition: "stroke-dashoffset 1.2s cubic-bezier(0.22, 1, 0.36, 1)" }}
           />
 
-          {/* Inner dot at the end of the arc */}
+          {/* Dot at the end of the arc */}
           {value > 0 && (
             <circle
+              cx={dotX}
+              cy={dotY}
               r="5"
               fill={to}
               style={{
-                transition: "all 1.2s cubic-bezier(0.22, 1, 0.36, 1)",
+                transition: "cx 1.2s cubic-bezier(0.22, 1, 0.36, 1), cy 1.2s cubic-bezier(0.22, 1, 0.36, 1)",
+                filter: `drop-shadow(0 0 6px ${to})`,
               }}
-            >
-              <animateMotion
-                dur="0.01s"
-                fill="freeze"
-                path={describeArc(cx, cy, r, 135, 135 + value * 270)}
-              />
-            </circle>
+            />
           )}
         </svg>
 
@@ -177,18 +182,3 @@ function RadialGauge({
   );
 }
 
-function describeArc(cx: number, cy: number, r: number, startAngle: number, endAngle: number) {
-  // Convert angles to radians; subtract 90 because SVG 0° is at 3 o'clock
-  const start = polarToCartesian(cx, cy, r, endAngle);
-  const end = polarToCartesian(cx, cy, r, startAngle);
-  const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
-  return [`M ${start.x} ${start.y}`, `A ${r} ${r} 0 ${largeArcFlag} 0 ${end.x} ${end.y}`].join(" ");
-}
-
-function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
-  const angleRad = ((angleDeg - 90) * Math.PI) / 180.0;
-  return {
-    x: cx + r * Math.cos(angleRad),
-    y: cy + r * Math.sin(angleRad),
-  };
-}
