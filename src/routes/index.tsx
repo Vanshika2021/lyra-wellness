@@ -728,16 +728,7 @@ function NeuralActivityPanel() {
               title="Neural activity"
               loading="lazy"
               className="block w-full"
-              style={{ border: "none", height: "70vh", background: "#080810" }}
-              ref={(el) => {
-                if (el && typeof window !== "undefined") {
-                  const apply = () => {
-                    el.style.height = window.innerWidth >= 768 ? "100vh" : "70vh";
-                  };
-                  apply();
-                  window.addEventListener("resize", apply);
-                }
-              }}
+              style={{ border: "none", height: "60vh", minHeight: 420, background: "#080810" }}
             />
           )}
         </div>
