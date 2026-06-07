@@ -109,9 +109,17 @@ function LyraSession() {
     setProcessError(null);
     setTranscript("");
     setReplyText("");
+    setMood(null);
+    setFeatures(null);
     if (replyAudioUrl) { URL.revokeObjectURL(replyAudioUrl); setReplyAudioUrl(null); }
 
     try {
+      // Kick off feature extraction in parallel with STT — pure client-side, no extra latency on the server side
+      const featuresPromise = extractVocalFeatures(blob).catch((err) => {
+        console.warn("vocal feature extraction failed", err);
+        return null;
+      });
+
       const fd = new FormData();
       fd.append("audio", blob, "recording.webm");
       const sttRes = await fetch("/api/elevenlabs/stt", { method: "POST", body: fd });
@@ -120,10 +128,23 @@ function LyraSession() {
       const safeText = (text || "").trim() || "(I couldn't quite catch your words — I'm still here with you.)";
       setTranscript(safeText);
 
+      const feats = await featuresPromise;
+      let moodSig: MoodSignature | null = null;
+      if (feats) {
+        moodSig = buildMoodSignature(feats, safeText);
+        setFeatures(feats);
+        setMood(moodSig);
+      }
+
       const replyRes = await fetch("/api/elevenlabs/reply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ transcript: safeText }),
+        body: JSON.stringify({
+          transcript: safeText,
+          vocalMood: moodSig?.descriptor,
+          distress: moodSig?.distress,
+          arousal: moodSig?.arousal,
+        }),
       });
       if (!replyRes.ok) throw new Error((await replyRes.json())?.error || "Reply failed");
       const { reply, audio_base64 } = (await replyRes.json()) as { reply: string; audio_base64: string };
