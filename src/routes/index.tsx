@@ -313,30 +313,27 @@ function LyraSession() {
           {/* Results */}
           {state === "results" && (
             <div className="w-full space-y-6 animate-[fade-in_0.6s_ease-out]">
-              <div className="rounded-3xl border border-border/60 bg-card/60 p-6 backdrop-blur-xl" style={{ boxShadow: "var(--shadow-soft)" }}>
-                <div className="mb-4 flex items-center justify-between">
-                  <div>
-                    <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Your reflection</p>
-                    <p className="mt-1 font-display text-xl text-foreground">A gentle reply, just for you</p>
-                  </div>
-                  <Sparkles className="h-5 w-5 text-primary" />
+              {/* Unified voice + music healing session */}
+              <IntegratedHealing
+                voiceUrl={replyAudioUrl}
+                musicUrl={musicUrl}
+                musicBpm={musicBpm}
+                musicLoading={musicLoading}
+                musicError={musicError}
+                replyText={replyText}
+                distress={mood?.distress ?? 0.5}
+              />
+
+              {processError && (
+                <p className="text-center text-sm text-blush">{processError}</p>
+              )}
+
+              {transcript && (
+                <div className="rounded-3xl border border-border/60 bg-card/60 p-6 backdrop-blur-xl" style={{ boxShadow: "var(--shadow-soft)" }}>
+                  <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">What you shared</p>
+                  <p className="mt-2 text-sm italic leading-relaxed text-muted-foreground">"{transcript}"</p>
                 </div>
-                <AudioPlayer src={replyAudioUrl ?? undefined} duration={recordedSeconds} />
-                {processError && (
-                  <p className="mt-4 text-sm text-blush">{processError}</p>
-                )}
-                {replyText && (
-                  <p className="mt-5 text-sm leading-relaxed text-foreground/90">
-                    "{replyText}"
-                  </p>
-                )}
-                {transcript && (
-                  <div className="mt-5 border-t border-border/50 pt-4">
-                    <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">What you shared</p>
-                    <p className="mt-2 text-sm italic leading-relaxed text-muted-foreground">"{transcript}"</p>
-                  </div>
-                )}
-              </div>
+              )}
 
               <MoodState distress={mood?.distress ?? 0.5} arousal={mood?.arousal ?? 0.5} />
               {features && (
@@ -400,16 +397,7 @@ function LyraSession() {
                 </div>
               </div>
 
-              {/* Healing track */}
-              {(musicLoading || musicUrl || musicError) && (
-                <HealingTrack
-                  loading={musicLoading}
-                  url={musicUrl}
-                  bpm={musicBpm}
-                  error={musicError}
-                  distress={mood?.distress ?? 0.5}
-                />
-              )}
+
 
 
 
