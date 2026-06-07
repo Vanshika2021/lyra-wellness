@@ -156,6 +156,11 @@ function LyraSession() {
       const { reply, audio_base64 } = (await replyRes.json()) as { reply: string; audio_base64: string };
       setReplyText(reply);
       setReplyAudioUrl(`data:audio/mpeg;base64,${audio_base64}`);
+
+      // Fire music generation (don't block results screen)
+      if (moodSig) {
+        void generateMusic(moodSig.distress);
+      }
     } catch (e) {
       setProcessError(e instanceof Error ? e.message : "Something went quiet. Please try again.");
     } finally {
