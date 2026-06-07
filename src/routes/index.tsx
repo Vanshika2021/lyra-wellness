@@ -567,8 +567,7 @@ function LyraSession() {
           )}
 
           {state === "results" && (
-            <div className="grid w-full grid-cols-1 gap-6 animate-[fade-in_0.6s_ease-out] md:grid-cols-2 md:gap-8">
-              <div className="w-full space-y-6">
+            <div className="w-full space-y-6 animate-[fade-in_0.6s_ease-out]">
               {/* Breathing orb tuned to returned BPM */}
               <div className="flex flex-col items-center">
                 <BreathingOrb active size={220} bpm={bpm} />
@@ -665,15 +664,13 @@ function LyraSession() {
 
               <TribeBrain mood={mood} features={features} />
 
+              <NeuralActivityPanel />
 
               <div className="flex justify-center pt-2">
                 <button onClick={reset} className="rounded-full border border-border/60 bg-card/50 px-6 py-3 text-sm text-foreground backdrop-blur transition hover:bg-card">
                   New check-in
                 </button>
               </div>
-              </div>
-
-              <NeuralActivityPanel />
             </div>
           )}
 
