@@ -667,3 +667,51 @@ function LyraSession() {
     </main>
   );
 }
+
+function NeuralActivityPanel() {
+  const [failed, setFailed] = useState(false);
+  if (failed) return null;
+  return (
+    <aside className="w-full">
+      <div className="mb-3 text-center lg:text-left">
+        <h2 className="font-display text-xl text-foreground sm:text-2xl">How your mind responded</h2>
+        <p className="mt-1 text-xs leading-relaxed text-muted-foreground sm:text-sm">
+          Different regions of your brain light up as they respond — calming, reflecting, and easing.
+        </p>
+      </div>
+      <div
+        className="rounded-3xl p-[1px]"
+        style={{
+          background:
+            "linear-gradient(140deg, oklch(0.72 0.12 305 / 0.45), oklch(0.65 0.08 230 / 0.25) 45%, oklch(0.80 0.10 60 / 0.35))",
+          boxShadow: "var(--shadow-soft)",
+        }}
+      >
+        <div
+          className="overflow-hidden rounded-[calc(1.5rem-1px)]"
+          style={{ background: "#080810" }}
+        >
+          <iframe
+            src="https://fxlysgacizwmecgbhjzs.supabase.co/storage/v1/object/public/tracks/tribe_demo_hardcoded.html"
+            title="Neural activity"
+            loading="lazy"
+            onError={() => setFailed(true)}
+            className="block w-full"
+            style={{ border: "none", height: "70vh", background: "#080810" }}
+            // @ts-expect-error - inline responsive height handled via CSS below
+            ref={(el) => {
+              if (el && typeof window !== "undefined") {
+                const apply = () => {
+                  el.style.height = window.innerWidth >= 1024 ? "100vh" : "70vh";
+                };
+                apply();
+                window.addEventListener("resize", apply);
+              }
+            }}
+          />
+        </div>
+      </div>
+    </aside>
+  );
+}
+
