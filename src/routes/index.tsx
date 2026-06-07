@@ -135,7 +135,19 @@ function LyraSession() {
         streamRef.current?.getTracks().forEach((t) => t.stop());
         streamRef.current = null;
         setState("processing");
-        await processRecording(blob);
+        // Kick off voice cloning in parallel so AI replies can sound like the user.
+        clonedVoiceIdRef.current = null;
+        const clonePromise = (async () => {
+          try {
+            const cf = new FormData();
+            cf.append("audio", blob, "sample.webm");
+            const cr = await fetch("/api/elevenlabs/clone", { method: "POST", body: cf });
+            if (!cr.ok) return null;
+            const cj = (await cr.json()) as { voiceId?: string };
+            return cj.voiceId ?? null;
+          } catch { return null; }
+        })();
+        await processRecording(blob, clonePromise);
       };
       recorderRef.current = recorder;
       recorder.start(250);
