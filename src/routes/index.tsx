@@ -668,8 +668,8 @@ function LyraSession() {
   );
 }
 
-const NEURAL_IFRAME_URL =
-  "https://fxlysgacizwmecgbhjzs.supabase.co/storage/v1/object/public/tracks/tribe_demo_hardcoded.html";
+const NEURAL_IFRAME_URL = "/tribe_demo_hardcoded.html";
+
 
 function NeuralActivityPanel() {
   const [status, setStatus] = useState<"checking" | "ok" | "failed">("checking");
