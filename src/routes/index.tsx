@@ -527,14 +527,14 @@ function LyraSession() {
               {/* Affirmations — editorial serif, like a printed poem */}
               {affirmations.length > 0 && (
                 <div
-                  className="rounded-3xl border border-border/60 bg-card/60 px-8 py-14 text-center backdrop-blur-xl sm:px-16 sm:py-20"
+                  className="rounded-3xl border border-border/60 bg-card/60 px-4 py-7 text-center backdrop-blur-xl sm:px-8 sm:py-10"
                   style={{ boxShadow: "var(--shadow-soft)" }}
                 >
-                  <div className="mx-auto max-w-xs space-y-14 sm:space-y-20">
+                  <div className="mx-auto max-w-xs space-y-7 sm:space-y-10">
                     {affirmations.map((a, i) => (
                       <p
                         key={i}
-                        className="text-balance text-[1.25rem] italic leading-[1.5] text-foreground/90 sm:text-[1.5rem] sm:leading-[1.45]"
+                        className="text-balance text-[1.1rem] italic leading-[1.5] text-foreground/90 sm:text-[1.25rem] sm:leading-[1.45]"
                         style={{
                           fontFamily: '"Instrument Serif", Fraunces, Georgia, serif',
                           fontWeight: 400,
