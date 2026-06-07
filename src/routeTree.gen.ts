@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiElevenlabsSttRouteImport } from './routes/api/elevenlabs/stt'
 import { Route as ApiElevenlabsReplyRouteImport } from './routes/api/elevenlabs/reply'
+import { Route as ApiElevenlabsMusicRouteImport } from './routes/api/elevenlabs/music'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -28,33 +29,55 @@ const ApiElevenlabsReplyRoute = ApiElevenlabsReplyRouteImport.update({
   path: '/api/elevenlabs/reply',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiElevenlabsMusicRoute = ApiElevenlabsMusicRouteImport.update({
+  id: '/api/elevenlabs/music',
+  path: '/api/elevenlabs/music',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/elevenlabs/music': typeof ApiElevenlabsMusicRoute
   '/api/elevenlabs/reply': typeof ApiElevenlabsReplyRoute
   '/api/elevenlabs/stt': typeof ApiElevenlabsSttRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/elevenlabs/music': typeof ApiElevenlabsMusicRoute
   '/api/elevenlabs/reply': typeof ApiElevenlabsReplyRoute
   '/api/elevenlabs/stt': typeof ApiElevenlabsSttRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/elevenlabs/music': typeof ApiElevenlabsMusicRoute
   '/api/elevenlabs/reply': typeof ApiElevenlabsReplyRoute
   '/api/elevenlabs/stt': typeof ApiElevenlabsSttRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/elevenlabs/reply' | '/api/elevenlabs/stt'
+  fullPaths:
+    | '/'
+    | '/api/elevenlabs/music'
+    | '/api/elevenlabs/reply'
+    | '/api/elevenlabs/stt'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/elevenlabs/reply' | '/api/elevenlabs/stt'
-  id: '__root__' | '/' | '/api/elevenlabs/reply' | '/api/elevenlabs/stt'
+  to:
+    | '/'
+    | '/api/elevenlabs/music'
+    | '/api/elevenlabs/reply'
+    | '/api/elevenlabs/stt'
+  id:
+    | '__root__'
+    | '/'
+    | '/api/elevenlabs/music'
+    | '/api/elevenlabs/reply'
+    | '/api/elevenlabs/stt'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiElevenlabsMusicRoute: typeof ApiElevenlabsMusicRoute
   ApiElevenlabsReplyRoute: typeof ApiElevenlabsReplyRoute
   ApiElevenlabsSttRoute: typeof ApiElevenlabsSttRoute
 }
@@ -82,14 +105,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiElevenlabsReplyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/elevenlabs/music': {
+      id: '/api/elevenlabs/music'
+      path: '/api/elevenlabs/music'
+      fullPath: '/api/elevenlabs/music'
+      preLoaderRoute: typeof ApiElevenlabsMusicRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiElevenlabsMusicRoute: ApiElevenlabsMusicRoute,
   ApiElevenlabsReplyRoute: ApiElevenlabsReplyRoute,
   ApiElevenlabsSttRoute: ApiElevenlabsSttRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
