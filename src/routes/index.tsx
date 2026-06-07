@@ -217,11 +217,117 @@ function LyraSession() {
     }
   }
 
+  async function loadAffirmationVoices(items: string[]) {
+    // Cleanup any previously loaded voices
+    voiceAudiosRef.current.forEach((a) => { a.pause(); a.src = ""; });
+    voiceAudiosRef.current = [];
+    setVoiceError(null);
+    if (!items.length) return;
+    setVoiceLoading(true);
+    try {
+      const results = await Promise.all(
+        items.map(async (text) => {
+          const res = await fetch("/api/elevenlabs/tts", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text }),
+          });
+          if (!res.ok) {
+            const j = await res.json().catch(() => ({}));
+            throw new Error(j?.error || `TTS failed: ${res.status}`);
+          }
+          const json = (await res.json()) as { audio_base64: string };
+          const audio = new Audio(`data:audio/mpeg;base64,${json.audio_base64}`);
+          audio.preload = "auto";
+          audio.volume = 0.95;
+          return audio;
+        }),
+      );
+      voiceAudiosRef.current = results;
+    } catch (e) {
+      setVoiceError(e instanceof Error ? e.message : "Couldn't prepare the spoken guidance.");
+    } finally {
+      setVoiceLoading(false);
+    }
+  }
+
+  function fadeVolume(audio: HTMLAudioElement, target: number, ms = 600) {
+    const start = audio.volume;
+    const steps = 20;
+    const stepMs = Math.max(10, ms / steps);
+    let i = 0;
+    const id = window.setInterval(() => {
+      i += 1;
+      const t = i / steps;
+      audio.volume = Math.max(0, Math.min(1, start + (target - start) * t));
+      if (i >= steps) {
+        window.clearInterval(id);
+        fadeIntervalsRef.current = fadeIntervalsRef.current.filter((x) => x !== id);
+      }
+    }, stepMs);
+    fadeIntervalsRef.current.push(id);
+  }
+
+  function clearScheduling() {
+    playTimeoutsRef.current.forEach((id) => window.clearTimeout(id));
+    playTimeoutsRef.current = [];
+    fadeIntervalsRef.current.forEach((id) => window.clearInterval(id));
+    fadeIntervalsRef.current = [];
+  }
+
+  function scheduleAffirmations() {
+    const music = musicRef.current;
+    const voices = voiceAudiosRef.current;
+    if (!music || voices.length === 0) return;
+
+    const INTRO_MS = 4000; // breathe into the music first
+    const GAP_MS = 6000;   // gap between affirmations
+    const PASSES = 2;       // loop each affirmation twice across the track
+    const MUSIC_BED = 0.65;
+    const MUSIC_DUCK = 0.18;
+
+    let cursor = INTRO_MS;
+    const sequence: string[] = [];
+    for (let p = 0; p < PASSES; p += 1) sequence.push(...voices.map((_, i) => String(i)));
+
+    sequence.forEach((idxStr) => {
+      const idx = Number(idxStr);
+      const startAt = cursor;
+      const t1 = window.setTimeout(() => {
+        const v = voiceAudiosRef.current[idx];
+        if (!v || !musicRef.current) return;
+        fadeVolume(musicRef.current, MUSIC_DUCK, 500);
+        try { v.currentTime = 0; } catch { /* ignore */ }
+        v.play().catch(() => {});
+        const onEnd = () => {
+          v.removeEventListener("ended", onEnd);
+          const m = musicRef.current;
+          if (m) {
+            const t2 = window.setTimeout(() => fadeVolume(m, MUSIC_BED, 800), 700);
+            playTimeoutsRef.current.push(t2);
+          }
+        };
+        v.addEventListener("ended", onEnd);
+      }, startAt);
+      playTimeoutsRef.current.push(t1);
+      // estimate 5s per affirmation + gap; real fade-back happens on `ended`
+      cursor += 5000 + GAP_MS;
+    });
+  }
+
   function toggleMusic() {
     const el = musicRef.current;
     if (!el) return;
-    if (el.paused) { el.play().catch(() => {}); }
-    else { el.pause(); }
+    if (el.paused) {
+      el.volume = 0.65;
+      el.play().then(() => {
+        scheduleAffirmations();
+      }).catch(() => {});
+    } else {
+      el.pause();
+      voiceAudiosRef.current.forEach((v) => v.pause());
+      clearScheduling();
+    }
   }
 
   function reset() {
@@ -239,6 +345,11 @@ function LyraSession() {
     setPhq9Error(null);
     setPhq9Loading(false);
     setCrisis(false);
+    clearScheduling();
+    voiceAudiosRef.current.forEach((a) => { a.pause(); a.src = ""; });
+    voiceAudiosRef.current = [];
+    setVoiceError(null);
+    setVoiceLoading(false);
     setState("idle");
   }
 
