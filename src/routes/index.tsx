@@ -513,7 +513,7 @@ function LyraSession() {
                   className="rounded-3xl border border-border/60 bg-card/60 px-8 py-14 text-center backdrop-blur-xl sm:px-16 sm:py-20"
                   style={{ boxShadow: "var(--shadow-soft)" }}
                 >
-                  <div className="space-y-14 sm:space-y-20">
+                  <div className="mx-auto max-w-xl space-y-14 sm:space-y-20">
                     {affirmations.map((a, i) => (
                       <p
                         key={i}
