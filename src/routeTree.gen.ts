@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiScreenPhq9RouteImport } from './routes/api/screen/phq9'
+import { Route as ApiElevenlabsTtsRouteImport } from './routes/api/elevenlabs/tts'
 import { Route as ApiElevenlabsSttRouteImport } from './routes/api/elevenlabs/stt'
 import { Route as ApiElevenlabsReplyRouteImport } from './routes/api/elevenlabs/reply'
 import { Route as ApiElevenlabsMusicRouteImport } from './routes/api/elevenlabs/music'
@@ -23,6 +24,11 @@ const IndexRoute = IndexRouteImport.update({
 const ApiScreenPhq9Route = ApiScreenPhq9RouteImport.update({
   id: '/api/screen/phq9',
   path: '/api/screen/phq9',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiElevenlabsTtsRoute = ApiElevenlabsTtsRouteImport.update({
+  id: '/api/elevenlabs/tts',
+  path: '/api/elevenlabs/tts',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiElevenlabsSttRoute = ApiElevenlabsSttRouteImport.update({
@@ -46,6 +52,7 @@ export interface FileRoutesByFullPath {
   '/api/elevenlabs/music': typeof ApiElevenlabsMusicRoute
   '/api/elevenlabs/reply': typeof ApiElevenlabsReplyRoute
   '/api/elevenlabs/stt': typeof ApiElevenlabsSttRoute
+  '/api/elevenlabs/tts': typeof ApiElevenlabsTtsRoute
   '/api/screen/phq9': typeof ApiScreenPhq9Route
 }
 export interface FileRoutesByTo {
@@ -53,6 +60,7 @@ export interface FileRoutesByTo {
   '/api/elevenlabs/music': typeof ApiElevenlabsMusicRoute
   '/api/elevenlabs/reply': typeof ApiElevenlabsReplyRoute
   '/api/elevenlabs/stt': typeof ApiElevenlabsSttRoute
+  '/api/elevenlabs/tts': typeof ApiElevenlabsTtsRoute
   '/api/screen/phq9': typeof ApiScreenPhq9Route
 }
 export interface FileRoutesById {
@@ -61,6 +69,7 @@ export interface FileRoutesById {
   '/api/elevenlabs/music': typeof ApiElevenlabsMusicRoute
   '/api/elevenlabs/reply': typeof ApiElevenlabsReplyRoute
   '/api/elevenlabs/stt': typeof ApiElevenlabsSttRoute
+  '/api/elevenlabs/tts': typeof ApiElevenlabsTtsRoute
   '/api/screen/phq9': typeof ApiScreenPhq9Route
 }
 export interface FileRouteTypes {
@@ -70,6 +79,7 @@ export interface FileRouteTypes {
     | '/api/elevenlabs/music'
     | '/api/elevenlabs/reply'
     | '/api/elevenlabs/stt'
+    | '/api/elevenlabs/tts'
     | '/api/screen/phq9'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -77,6 +87,7 @@ export interface FileRouteTypes {
     | '/api/elevenlabs/music'
     | '/api/elevenlabs/reply'
     | '/api/elevenlabs/stt'
+    | '/api/elevenlabs/tts'
     | '/api/screen/phq9'
   id:
     | '__root__'
@@ -84,6 +95,7 @@ export interface FileRouteTypes {
     | '/api/elevenlabs/music'
     | '/api/elevenlabs/reply'
     | '/api/elevenlabs/stt'
+    | '/api/elevenlabs/tts'
     | '/api/screen/phq9'
   fileRoutesById: FileRoutesById
 }
@@ -92,6 +104,7 @@ export interface RootRouteChildren {
   ApiElevenlabsMusicRoute: typeof ApiElevenlabsMusicRoute
   ApiElevenlabsReplyRoute: typeof ApiElevenlabsReplyRoute
   ApiElevenlabsSttRoute: typeof ApiElevenlabsSttRoute
+  ApiElevenlabsTtsRoute: typeof ApiElevenlabsTtsRoute
   ApiScreenPhq9Route: typeof ApiScreenPhq9Route
 }
 
@@ -109,6 +122,13 @@ declare module '@tanstack/react-router' {
       path: '/api/screen/phq9'
       fullPath: '/api/screen/phq9'
       preLoaderRoute: typeof ApiScreenPhq9RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/elevenlabs/tts': {
+      id: '/api/elevenlabs/tts'
+      path: '/api/elevenlabs/tts'
+      fullPath: '/api/elevenlabs/tts'
+      preLoaderRoute: typeof ApiElevenlabsTtsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/elevenlabs/stt': {
@@ -140,6 +160,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiElevenlabsMusicRoute: ApiElevenlabsMusicRoute,
   ApiElevenlabsReplyRoute: ApiElevenlabsReplyRoute,
   ApiElevenlabsSttRoute: ApiElevenlabsSttRoute,
+  ApiElevenlabsTtsRoute: ApiElevenlabsTtsRoute,
   ApiScreenPhq9Route: ApiScreenPhq9Route,
 }
 export const routeTree = rootRouteImport
