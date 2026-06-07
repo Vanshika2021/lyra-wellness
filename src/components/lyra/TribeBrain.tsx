@@ -22,7 +22,15 @@ type Region = {
   color: string;     // glow color
   activation: number; // 0..1
   driver: string;    // human-readable formula driver
+  meaning: string;   // plain-English interpretation
 };
+
+function activationLabel(v: number): { label: string; tone: string } {
+  if (v >= 0.75) return { label: "Highly active", tone: "oklch(0.78 0.16 25)" };
+  if (v >= 0.55) return { label: "Engaged",       tone: "oklch(0.80 0.14 60)" };
+  if (v >= 0.35) return { label: "Steady",        tone: "oklch(0.78 0.10 200)" };
+  return            { label: "Quiet",          tone: "oklch(0.70 0.05 250)" };
+}
 
 function clamp01(v: number) { return v < 0 ? 0 : v > 1 ? 1 : v; }
 
@@ -47,45 +55,50 @@ export default function TribeBrain({ mood, features }: Props) {
         name: "Amygdala",
         role: "threat / emotional salience",
         cx: 232, cy: 168, rx: 22, ry: 16,
-        color: "oklch(0.68 0.20 25)", // warm red
+        color: "oklch(0.68 0.20 25)",
         activation: clamp01(0.55 * d + 0.25 * pitchHi + 0.20 * dynamics),
         driver: "distress · pitch height · vocal dynamics",
+        meaning: "Your alarm system. When this lights up, your body is registering something that feels unsafe or overwhelming.",
       },
       {
         id: "pfc",
         name: "Prefrontal Cortex",
         role: "top-down regulation",
         cx: 110, cy: 110, rx: 58, ry: 36,
-        color: "oklch(0.75 0.14 230)", // cool blue
+        color: "oklch(0.75 0.14 230)",
         activation: clamp01(0.6 * (1 - d) + 0.25 * (1 - fast) + 0.15 * voiced),
         driver: "calm (low distress) · slower pace · steady voicing",
+        meaning: "The grown-up in the room — the part of you reflecting, choosing words carefully, and soothing yourself in real time.",
       },
       {
         id: "insula",
         name: "Insula",
         role: "interoception / feeling intensity",
         cx: 198, cy: 150, rx: 26, ry: 18,
-        color: "oklch(0.78 0.16 60)", // amber
+        color: "oklch(0.78 0.16 60)",
         activation: clamp01(0.5 * energy + 0.3 * dynamics + 0.2 * a),
         driver: "loudness · dynamics · arousal",
+        meaning: "How loudly your body is talking to you — tightness in the chest, heat, butterflies. High here means you're feeling a lot, physically.",
       },
       {
         id: "acc",
         name: "Anterior Cingulate",
         role: "conflict & attention",
         cx: 165, cy: 110, rx: 30, ry: 18,
-        color: "oklch(0.74 0.18 320)", // magenta
+        color: "oklch(0.74 0.18 320)",
         activation: clamp01(0.5 * a + 0.3 * fast + 0.2 * pitchExpr),
         driver: "arousal · speech rate · intonation variance",
+        meaning: "The part that notices when something's off. High activity often means you're holding two feelings at once, or weighing a hard choice.",
       },
       {
         id: "auditory",
         name: "Auditory / Broca",
         role: "speech production & prosody",
         cx: 268, cy: 140, rx: 30, ry: 22,
-        color: "oklch(0.80 0.16 150)", // green
+        color: "oklch(0.80 0.16 150)",
         activation: clamp01(0.5 * pitchExpr + 0.3 * voiced + 0.2 * (1 - pausy)),
         driver: "intonation · voicing · continuity",
+        meaning: "Your storytelling self — how expressively and fluidly the words are coming out. Quiet here can mean searching for words.",
       },
       {
         id: "brainstem",
@@ -95,15 +108,48 @@ export default function TribeBrain({ mood, features }: Props) {
         color: "oklch(0.78 0.14 35)",
         activation: clamp01(0.7 * a + 0.3 * energy),
         driver: "arousal · energy",
+        meaning: "The dial on your nervous system. Higher means more revved up; lower means calmer, more settled, or tired.",
       },
     ];
   }, [mood, features]);
 
   const headline = useMemo(() => {
-    // The region with highest activation drives the headline
     const top = [...regions].sort((a, b) => b.activation - a.activation)[0];
     if (!top) return "Listening…";
     return `${top.name} most engaged · ${Math.round(top.activation * 100)}%`;
+  }, [regions]);
+
+  const narrative = useMemo(() => {
+    const byId = Object.fromEntries(regions.map((r) => [r.id, r.activation])) as Record<string, number>;
+    const amy = byId.amygdala ?? 0.5;
+    const pfc = byId.pfc ?? 0.5;
+    const ins = byId.insula ?? 0.5;
+    const acc = byId.acc ?? 0.5;
+    const stem = byId.brainstem ?? 0.5;
+
+    const parts: string[] = [];
+
+    // Regulation vs threat balance
+    if (pfc > amy + 0.1) {
+      parts.push("Your regulating mind is leading right now — you're staying with the feeling without being swept by it.");
+    } else if (amy > pfc + 0.1) {
+      parts.push("Your alarm system is louder than your soothing system at the moment. That's a signal you may need care, not criticism.");
+    } else {
+      parts.push("Your alarm and your regulation are in close conversation — you're holding something hard, and you're holding it.");
+    }
+
+    // Body load
+    if (ins >= 0.65) parts.push("Your body is carrying a lot of this — the feeling is physical, not just in your head.");
+    else if (ins <= 0.35) parts.push("Your body sounds quiet, even if the thoughts aren't.");
+
+    // Conflict
+    if (acc >= 0.65) parts.push("There's a tug-of-war underneath — two true things at once.");
+
+    // Arousal
+    if (stem >= 0.7) parts.push("Your nervous system is revved up; slow exhales will help more than thinking right now.");
+    else if (stem <= 0.3) parts.push("Your system sounds settled — a gentle, low-tide kind of day.");
+
+    return parts.join(" ");
   }, [regions]);
 
   return (
@@ -127,6 +173,12 @@ export default function TribeBrain({ mood, features }: Props) {
             v2 · live
           </span>
         </div>
+
+        {narrative && (
+          <p className="mt-4 text-balance text-sm leading-relaxed text-foreground/85">
+            {narrative}
+          </p>
+        )}
       </div>
 
       <div className="relative mt-4 aspect-[16/10] w-full bg-[oklch(0.16_0.03_270)]">
@@ -193,37 +245,51 @@ export default function TribeBrain({ mood, features }: Props) {
 
       {/* Region read-out */}
       <div className="grid grid-cols-1 gap-2 px-6 py-5 sm:grid-cols-2">
-        {regions.map((r) => (
-          <div
-            key={r.id}
-            className="flex items-center gap-3 rounded-2xl border border-border/50 bg-background/40 p-3"
-          >
-            <span
-              className="h-2.5 w-2.5 shrink-0 rounded-full"
-              style={{ background: r.color, boxShadow: `0 0 10px ${r.color}` }}
-            />
-            <div className="min-w-0 flex-1">
-              <div className="flex items-baseline justify-between gap-2">
-                <p className="truncate text-sm text-foreground">{r.name}</p>
-                <p className="font-mono text-xs tabular-nums text-muted-foreground">
-                  {Math.round(r.activation * 100)}%
+        {regions.map((r) => {
+          const lvl = activationLabel(r.activation);
+          return (
+            <div
+              key={r.id}
+              className="flex items-start gap-3 rounded-2xl border border-border/50 bg-background/40 p-3"
+            >
+              <span
+                className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full"
+                style={{ background: r.color, boxShadow: `0 0 10px ${r.color}` }}
+              />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-baseline justify-between gap-2">
+                  <p className="truncate text-sm text-foreground">{r.name}</p>
+                  <p className="font-mono text-xs tabular-nums text-muted-foreground">
+                    {Math.round(r.activation * 100)}%
+                  </p>
+                </div>
+                <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-border/40">
+                  <div
+                    className="h-full rounded-full transition-all duration-700"
+                    style={{ width: `${Math.round(r.activation * 100)}%`, background: r.color }}
+                  />
+                </div>
+                <div className="mt-2 flex items-center gap-2">
+                  <span
+                    className="rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wider"
+                    style={{ background: `color-mix(in oklab, ${lvl.tone} 18%, transparent)`, color: lvl.tone }}
+                  >
+                    {lvl.label}
+                  </span>
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70">
+                    {r.role}
+                  </span>
+                </div>
+                <p className="mt-2 text-[12px] leading-relaxed text-foreground/75">
+                  {r.meaning}
+                </p>
+                <p className="mt-1 text-[10px] uppercase tracking-wider text-muted-foreground/60">
+                  Signal: {r.driver}
                 </p>
               </div>
-              <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-border/40">
-                <div
-                  className="h-full rounded-full transition-all duration-700"
-                  style={{ width: `${Math.round(r.activation * 100)}%`, background: r.color }}
-                />
-              </div>
-              <p className="mt-1 text-[10px] uppercase tracking-wider text-muted-foreground/70">
-                {r.role}
-              </p>
-              <p className="mt-0.5 text-[11px] text-muted-foreground/80">
-                driven by {r.driver}
-              </p>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
