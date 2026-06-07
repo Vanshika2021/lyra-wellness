@@ -10,33 +10,53 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiElevenlabsSttRouteImport } from './routes/api/elevenlabs/stt'
+import { Route as ApiElevenlabsReplyRouteImport } from './routes/api/elevenlabs/reply'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiElevenlabsSttRoute = ApiElevenlabsSttRouteImport.update({
+  id: '/api/elevenlabs/stt',
+  path: '/api/elevenlabs/stt',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiElevenlabsReplyRoute = ApiElevenlabsReplyRouteImport.update({
+  id: '/api/elevenlabs/reply',
+  path: '/api/elevenlabs/reply',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/elevenlabs/reply': typeof ApiElevenlabsReplyRoute
+  '/api/elevenlabs/stt': typeof ApiElevenlabsSttRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/elevenlabs/reply': typeof ApiElevenlabsReplyRoute
+  '/api/elevenlabs/stt': typeof ApiElevenlabsSttRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/elevenlabs/reply': typeof ApiElevenlabsReplyRoute
+  '/api/elevenlabs/stt': typeof ApiElevenlabsSttRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/api/elevenlabs/reply' | '/api/elevenlabs/stt'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/api/elevenlabs/reply' | '/api/elevenlabs/stt'
+  id: '__root__' | '/' | '/api/elevenlabs/reply' | '/api/elevenlabs/stt'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiElevenlabsReplyRoute: typeof ApiElevenlabsReplyRoute
+  ApiElevenlabsSttRoute: typeof ApiElevenlabsSttRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,12 +68,38 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/elevenlabs/stt': {
+      id: '/api/elevenlabs/stt'
+      path: '/api/elevenlabs/stt'
+      fullPath: '/api/elevenlabs/stt'
+      preLoaderRoute: typeof ApiElevenlabsSttRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/elevenlabs/reply': {
+      id: '/api/elevenlabs/reply'
+      path: '/api/elevenlabs/reply'
+      fullPath: '/api/elevenlabs/reply'
+      preLoaderRoute: typeof ApiElevenlabsReplyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiElevenlabsReplyRoute: ApiElevenlabsReplyRoute,
+  ApiElevenlabsSttRoute: ApiElevenlabsSttRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
