@@ -284,7 +284,7 @@ function LyraSession() {
           const res = await fetch("/api/elevenlabs/tts", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ text }),
+            body: JSON.stringify(voiceId ? { text, voiceId } : { text }),
           });
           if (!res.ok) {
             const j = await res.json().catch(() => ({}));
