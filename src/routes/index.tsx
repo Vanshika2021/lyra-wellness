@@ -70,22 +70,6 @@ function LyraSession() {
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
-  const NEURAL_SRC = "https://fxlysgacizwmecgbhjzs.supabase.co/storage/v1/object/public/tracks/tribe_demo_hardcoded.html";
-  const [neuralError, setNeuralError] = useState(false);
-  const [neuralFullscreen, setNeuralFullscreen] = useState(false);
-  const neuralWrapRef = useRef<HTMLDivElement | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    fetch(NEURAL_SRC, { method: "GET", mode: "no-cors" })
-      .then(async () => {
-        try {
-          const r = await fetch(NEURAL_SRC, { method: "GET" });
-          if (!cancelled && !r.ok) setNeuralError(true);
-        } catch { /* CORS opaque — let iframe try */ }
-      })
-      .catch(() => { if (!cancelled) setNeuralError(true); });
-    return () => { cancelled = true; };
-  }, []);
 
   useEffect(() => {
     if (state !== "recording") return;
