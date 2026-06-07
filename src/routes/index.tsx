@@ -400,6 +400,19 @@ function LyraSession() {
                 </div>
               </div>
 
+              {/* Healing track */}
+              {(musicLoading || musicUrl || musicError) && (
+                <HealingTrack
+                  loading={musicLoading}
+                  url={musicUrl}
+                  bpm={musicBpm}
+                  error={musicError}
+                  distress={mood?.distress ?? 0.5}
+                />
+              )}
+
+
+
               <div className="flex justify-center pt-2">
                 <button onClick={reset} className="rounded-full border border-border/60 bg-card/50 px-6 py-3 text-sm text-foreground backdrop-blur transition hover:bg-card">
                   Begin another check-in
