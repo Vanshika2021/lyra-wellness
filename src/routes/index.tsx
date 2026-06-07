@@ -6,9 +6,7 @@ import { Waveform } from "@/components/lyra/Waveform";
 import { MoodState } from "@/components/lyra/MoodState";
 import { IntegratedHealing } from "@/components/lyra/IntegratedHealing";
 import { extractVocalFeatures, buildMoodSignature, type MoodSignature, type VocalFeatures } from "@/lib/audio-features";
-import brainHeatmapHigh from "@/assets/brain-heatmap-high.png";
-import brainHeatmapMedium from "@/assets/brain-heatmap-medium.png";
-import brainHeatmapLow from "@/assets/brain-heatmap-low.png";
+import TribeBrain from "@/components/lyra/TribeBrain";
 
 export const Route = createFileRoute("/")({
   head: () => ({
