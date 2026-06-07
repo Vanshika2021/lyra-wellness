@@ -220,7 +220,15 @@ function LyraSession() {
       setAffirmations(affs);
 
       void screenPhq9(safeText);
-      void loadAffirmationVoices(affs);
+      // Wait briefly for the clone to finish (don't block UI long); fall back to default voice.
+      const vid = clonePromise
+        ? await Promise.race([
+            clonePromise,
+            new Promise<string | null>((resolve) => setTimeout(() => resolve(null), 12000)),
+          ])
+        : null;
+      clonedVoiceIdRef.current = vid;
+      void loadAffirmationVoices(affs, vid ?? undefined);
     } catch (e) {
       setProcessError(e instanceof Error ? e.message : "Something went quiet. Please try again.");
     } finally {
