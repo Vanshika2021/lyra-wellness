@@ -2,6 +2,23 @@ import { createFileRoute } from "@tanstack/react-router";
 
 const VOICE_ID = "XrExE9yKIg1WjnnlVkGX"; // Matilda — warm, gentle
 
+function tuneVoice(distress?: number, arousal?: number) {
+  const d = typeof distress === "number" ? Math.max(0, Math.min(1, distress)) : 0.4;
+  const a = typeof arousal === "number" ? Math.max(0, Math.min(1, arousal)) : 0.4;
+  // Higher distress → steadier, slower, less stylized (more grounding)
+  // Lower arousal → softer, slower; higher arousal → slightly more present
+  const stability = 0.45 + 0.35 * d;          // 0.45..0.80
+  const style = Math.max(0.15, 0.45 - 0.25 * d); // 0.20..0.45
+  const speed = 0.88 + 0.12 * a - 0.05 * d;   // ~0.83..0.99
+  return {
+    stability,
+    similarity_boost: 0.78,
+    style,
+    use_speaker_boost: true,
+    speed: Math.max(0.8, Math.min(1.05, speed)),
+  };
+}
+
 export const Route = createFileRoute("/api/elevenlabs/reply")({
   server: {
     handlers: {
