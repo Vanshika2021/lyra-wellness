@@ -548,7 +548,7 @@ function LyraSession() {
           )}
 
           {state === "results" && (
-            <div className="grid w-full grid-cols-1 gap-6 animate-[fade-in_0.6s_ease-out] lg:grid-cols-2 lg:gap-8">
+            <div className="grid w-full grid-cols-1 gap-6 animate-[fade-in_0.6s_ease-out] md:grid-cols-2 md:gap-8">
               <div className="w-full space-y-6">
               {/* Breathing orb tuned to returned BPM */}
               <div className="flex flex-col items-center">
@@ -668,12 +668,27 @@ function LyraSession() {
   );
 }
 
+const NEURAL_IFRAME_URL =
+  "https://fxlysgacizwmecgbhjzs.supabase.co/storage/v1/object/public/tracks/tribe_demo_hardcoded.html";
+
 function NeuralActivityPanel() {
-  const [failed, setFailed] = useState(false);
-  if (failed) return null;
+  const [status, setStatus] = useState<"checking" | "ok" | "failed">("checking");
+
+  useEffect(() => {
+    let cancelled = false;
+    // Iframe `onError` doesn't fire on HTTP 404s for cross-origin docs,
+    // so probe the URL first and only mount the iframe if it's reachable.
+    fetch(NEURAL_IFRAME_URL, { method: "GET", mode: "no-cors" })
+      .then(() => { if (!cancelled) setStatus("ok"); })
+      .catch(() => { if (!cancelled) setStatus("failed"); });
+    return () => { cancelled = true; };
+  }, []);
+
+  if (status === "failed") return null;
+
   return (
     <aside className="w-full">
-      <div className="mb-3 text-center lg:text-left">
+      <div className="mb-3 text-center md:text-left">
         <h2 className="font-display text-xl text-foreground sm:text-2xl">How your mind responded</h2>
         <p className="mt-1 text-xs leading-relaxed text-muted-foreground sm:text-sm">
           Different regions of your brain light up as they respond — calming, reflecting, and easing.
@@ -691,27 +706,28 @@ function NeuralActivityPanel() {
           className="overflow-hidden rounded-[calc(1.5rem-1px)]"
           style={{ background: "#080810" }}
         >
-          <iframe
-            src="https://fxlysgacizwmecgbhjzs.supabase.co/storage/v1/object/public/tracks/tribe_demo_hardcoded.html"
-            title="Neural activity"
-            loading="lazy"
-            onError={() => setFailed(true)}
-            className="block w-full"
-            style={{ border: "none", height: "70vh", background: "#080810" }}
-            ref={(el) => {
-
-              if (el && typeof window !== "undefined") {
-                const apply = () => {
-                  el.style.height = window.innerWidth >= 1024 ? "100vh" : "70vh";
-                };
-                apply();
-                window.addEventListener("resize", apply);
-              }
-            }}
-          />
+          {status === "ok" && (
+            <iframe
+              src={NEURAL_IFRAME_URL}
+              title="Neural activity"
+              loading="lazy"
+              className="block w-full"
+              style={{ border: "none", height: "70vh", background: "#080810" }}
+              ref={(el) => {
+                if (el && typeof window !== "undefined") {
+                  const apply = () => {
+                    el.style.height = window.innerWidth >= 768 ? "100vh" : "70vh";
+                  };
+                  apply();
+                  window.addEventListener("resize", apply);
+                }
+              }}
+            />
+          )}
         </div>
       </div>
     </aside>
+
   );
 }
 
