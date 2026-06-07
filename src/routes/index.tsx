@@ -4,7 +4,7 @@ import { Mic, Square, Sparkles, Play, Pause } from "lucide-react";
 import { BreathingOrb } from "@/components/lyra/BreathingOrb";
 import { Waveform } from "@/components/lyra/Waveform";
 import { MoodState } from "@/components/lyra/MoodState";
-import type { MoodSignature, VocalFeatures } from "@/lib/audio-features";
+import { extractVocalFeatures, type MoodSignature, type VocalFeatures } from "@/lib/audio-features";
 import TribeBrain from "@/components/lyra/TribeBrain";
 import { PHQ9Card, type PHQ9Result } from "@/components/lyra/PHQ9Card";
 import ambientCalm from "@/assets/ambient-calm.mp4.asset.json";
