@@ -698,8 +698,8 @@ function NeuralActivityPanel() {
             onError={() => setFailed(true)}
             className="block w-full"
             style={{ border: "none", height: "70vh", background: "#080810" }}
-            // @ts-expect-error - inline responsive height handled via CSS below
             ref={(el) => {
+
               if (el && typeof window !== "undefined") {
                 const apply = () => {
                   el.style.height = window.innerWidth >= 1024 ? "100vh" : "70vh";
