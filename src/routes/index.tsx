@@ -7,6 +7,7 @@ import { MoodState } from "@/components/lyra/MoodState";
 import { IntegratedHealing } from "@/components/lyra/IntegratedHealing";
 import { extractVocalFeatures, buildMoodSignature, type MoodSignature, type VocalFeatures } from "@/lib/audio-features";
 import TribeBrain from "@/components/lyra/TribeBrain";
+import { PHQ9Card, type PHQ9Result } from "@/components/lyra/PHQ9Card";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -40,6 +41,10 @@ function LyraSession() {
   const [musicBpm, setMusicBpm] = useState<number | null>(null);
   const [musicLoading, setMusicLoading] = useState(false);
   const [musicError, setMusicError] = useState<string | null>(null);
+  const [phq9, setPhq9] = useState<PHQ9Result | null>(null);
+  const [phq9Loading, setPhq9Loading] = useState(false);
+  const [phq9Error, setPhq9Error] = useState<string | null>(null);
+  const [crisis, setCrisis] = useState(false);
   const timerRef = useRef<number | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -159,6 +164,9 @@ function LyraSession() {
       if (moodSig) {
         void generateMusic(moodSig.distress);
       }
+
+      // Fire PHQ-9 screening in parallel
+      void screenPhq9(safeText);
     } catch (e) {
       setProcessError(e instanceof Error ? e.message : "Something went quiet. Please try again.");
     } finally {
@@ -198,6 +206,31 @@ function LyraSession() {
     }
   }
 
+  async function screenPhq9(text: string) {
+    setPhq9(null);
+    setPhq9Error(null);
+    setCrisis(false);
+    setPhq9Loading(true);
+    try {
+      const res = await fetch("/api/screen/phq9", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ transcript: text }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        if (json?.crisis) setCrisis(true);
+        throw new Error(json?.error || "Screening failed");
+      }
+      setCrisis(Boolean(json?.crisis));
+      setPhq9(json?.screening ?? null);
+    } catch (e) {
+      setPhq9Error(e instanceof Error ? e.message : "Couldn't complete wellness insight.");
+    } finally {
+      setPhq9Loading(false);
+    }
+  }
+
   function reset() {
     setElapsed(0);
     if (audioUrl) { URL.revokeObjectURL(audioUrl); setAudioUrl(null); }
@@ -211,6 +244,10 @@ function LyraSession() {
     setMusicBpm(null);
     setMusicError(null);
     setMusicLoading(false);
+    setPhq9(null);
+    setPhq9Error(null);
+    setPhq9Loading(false);
+    setCrisis(false);
     setState("idle");
   }
 
@@ -334,6 +371,7 @@ function LyraSession() {
               )}
 
               <MoodState distress={mood?.distress ?? 0.5} arousal={mood?.arousal ?? 0.5} />
+              <PHQ9Card result={phq9} loading={phq9Loading} error={phq9Error} crisis={crisis} />
               {features && (
                 <div className="rounded-3xl border border-border/60 bg-card/60 p-5 backdrop-blur-xl" style={{ boxShadow: "var(--shadow-soft)" }}>
                   <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Voice signature</p>
