@@ -20,27 +20,6 @@ interface Props {
   crisis: boolean;
 }
 
-function humanSeverity(total: number | undefined, severityText?: string): { label: string; tone: "calm" | "mild" | "moderate" | "support" } {
-  const t = typeof total === "number" ? total : -1;
-  if (t >= 0 && t <= 4) return { label: "You seem to be doing okay", tone: "calm" };
-  if (t >= 5 && t <= 9) return { label: "Mild symptoms detected", tone: "mild" };
-  if (t >= 10 && t <= 14) return { label: "Moderate symptoms detected", tone: "moderate" };
-  if (t >= 15) return { label: "Please consider extra support", tone: "support" };
-
-  // fall back to severity text
-  const s = (severityText || "").toLowerCase();
-  if (s.includes("moderately severe") || s.includes("severe")) return { label: "Please consider extra support", tone: "support" };
-  if (s.includes("moderate")) return { label: "Moderate symptoms detected", tone: "moderate" };
-  if (s.includes("mild")) return { label: "Mild symptoms detected", tone: "mild" };
-  return { label: "You seem to be doing okay", tone: "calm" };
-}
-
-const toneStyles: Record<string, { ring: string; chip: string; glow: string }> = {
-  calm: { ring: "border-emerald-300/40", chip: "bg-emerald-400/15 text-emerald-200", glow: "oklch(0.78 0.12 165)" },
-  mild: { ring: "border-amber-300/40", chip: "bg-amber-400/15 text-amber-200", glow: "oklch(0.82 0.13 90)" },
-  moderate: { ring: "border-orange-300/50", chip: "bg-orange-400/15 text-orange-200", glow: "oklch(0.78 0.16 55)" },
-  support: { ring: "border-rose-300/50", chip: "bg-rose-400/15 text-rose-200", glow: "oklch(0.75 0.17 20)" },
-};
 
 export function PHQ9Card({ result, loading, error, crisis }: Props) {
   return (
