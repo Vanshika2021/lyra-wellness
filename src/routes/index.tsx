@@ -6,9 +6,7 @@ import { Waveform } from "@/components/lyra/Waveform";
 import { MoodState } from "@/components/lyra/MoodState";
 import { IntegratedHealing } from "@/components/lyra/IntegratedHealing";
 import { extractVocalFeatures, buildMoodSignature, type MoodSignature, type VocalFeatures } from "@/lib/audio-features";
-import brainHeatmapHigh from "@/assets/brain-heatmap-high.png";
-import brainHeatmapMedium from "@/assets/brain-heatmap-medium.png";
-import brainHeatmapLow from "@/assets/brain-heatmap-low.png";
+import TribeBrain from "@/components/lyra/TribeBrain";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -356,46 +354,8 @@ function LyraSession() {
                 </div>
               )}
 
-              <div className="overflow-hidden rounded-3xl border border-border/60 bg-card/60 backdrop-blur-xl" style={{ boxShadow: "var(--shadow-soft)" }}>
-                <div className="px-6 pt-5">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Predicted Brain Response · Meta TRIBE v2</p>
-                      <p className="mt-1 font-display text-xl text-foreground">
-                        {(() => {
-                          const d = mood?.distress ?? 0.5;
-                          if (d >= 0.7) return "Elevated amygdala activation detected";
-                          if (d >= 0.4) return "Moderate limbic engagement";
-                          return "Calm regulation response";
-                        })()}
-                      </p>
-                    </div>
-                    <span className="rounded-full bg-secondary/70 px-3 py-1 text-[10px] uppercase tracking-widest text-muted-foreground">Model · v0.2</span>
-                  </div>
-                  <p className="mt-1 text-xs text-muted-foreground/80">Directional guidance, not a clinical measurement</p>
-                </div>
-                <div className="relative mt-4 aspect-[16/10] w-full">
-                  {(() => {
-                    const d = mood?.distress ?? 0.5;
-                    const src = d >= 0.7 ? brainHeatmapHigh : d >= 0.4 ? brainHeatmapMedium : brainHeatmapLow;
-                    const alt = d >= 0.7 ? "Brain heatmap showing elevated amygdala activation" : d >= 0.4 ? "Brain heatmap showing moderate limbic engagement" : "Brain heatmap showing calm regulation response";
-                    return <img src={src} alt={alt} loading="lazy" width={1024} height={640} className="h-full w-full object-cover" />;
-                  })()}
-                  <div className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(180deg, transparent 40%, oklch(0.18 0.04 270 / 0.85))" }} />
-                  <div className="absolute bottom-4 left-6 right-6 flex flex-wrap gap-2">
-                    {[
-                      { c: "var(--lavender)", t: "Prefrontal · soothing" },
-                      { c: "var(--blush)", t: "Amygdala · tender" },
-                      { c: "var(--amber-glow)", t: "Insula · warming" },
-                    ].map((p) => (
-                      <span key={p.t} className="flex items-center gap-2 rounded-full border border-border/60 bg-background/60 px-3 py-1 text-xs text-foreground backdrop-blur">
-                        <span className="h-2 w-2 rounded-full" style={{ background: p.c, boxShadow: `0 0 10px ${p.c}` }} />
-                        {p.t}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
+              <TribeBrain mood={mood} features={features} />
+
 
 
 
