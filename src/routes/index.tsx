@@ -255,10 +255,21 @@ function LyraSession() {
                   </div>
                   <Sparkles className="h-5 w-5 text-primary" />
                 </div>
-                <AudioPlayer src={audioUrl ?? undefined} duration={recordedSeconds} />
-                <p className="mt-5 text-sm leading-relaxed text-muted-foreground">
-                  "I hear that today feels heavy. Let's breathe together for a moment — your body is asking for softness, not solutions."
-                </p>
+                <AudioPlayer src={replyAudioUrl ?? undefined} duration={recordedSeconds} />
+                {processError && (
+                  <p className="mt-4 text-sm text-blush">{processError}</p>
+                )}
+                {replyText && (
+                  <p className="mt-5 text-sm leading-relaxed text-foreground/90">
+                    "{replyText}"
+                  </p>
+                )}
+                {transcript && (
+                  <div className="mt-5 border-t border-border/50 pt-4">
+                    <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">What you shared</p>
+                    <p className="mt-2 text-sm italic leading-relaxed text-muted-foreground">"{transcript}"</p>
+                  </div>
+                )}
               </div>
 
               <MoodState distress={0.68} arousal={0.41} />
