@@ -470,13 +470,39 @@ function LyraSession() {
                 )}
               </div>
 
-              {/* Affirmations — large soft centered text */}
+              {/* Affirmations — editorial serif, like a printed poem */}
               {affirmations.length > 0 && (
-                <div className="rounded-3xl border border-border/60 bg-card/60 p-8 text-center backdrop-blur-xl" style={{ boxShadow: "var(--shadow-soft)" }}>
-                  <div className="space-y-5">
+                <div
+                  className="rounded-3xl border border-border/60 bg-card/60 px-8 py-12 text-center backdrop-blur-xl sm:px-14 sm:py-16"
+                  style={{ boxShadow: "var(--shadow-soft)" }}
+                >
+                  <div className="space-y-10 sm:space-y-12">
                     {affirmations.map((a, i) => (
-                      <p key={i} className="font-display text-2xl leading-snug text-foreground/90 sm:text-3xl">
+                      <p
+                        key={i}
+                        className="text-balance text-[1.75rem] italic leading-[1.35] text-foreground/90 sm:text-[2.5rem] sm:leading-[1.3]"
+                        style={{
+                          fontFamily: '"Instrument Serif", Fraunces, Georgia, serif',
+                          fontWeight: 400,
+                          letterSpacing: "0.005em",
+                          animation: `fade-in 1.2s ease-out ${i * 0.4}s both`,
+                        }}
+                      >
+                        <span
+                          aria-hidden="true"
+                          className="mr-1 align-[-0.15em] text-foreground/30"
+                          style={{ fontFamily: '"Instrument Serif", serif', fontSize: "1.4em" }}
+                        >
+                          “
+                        </span>
                         {a}
+                        <span
+                          aria-hidden="true"
+                          className="ml-1 align-[-0.15em] text-foreground/30"
+                          style={{ fontFamily: '"Instrument Serif", serif', fontSize: "1.4em" }}
+                        >
+                          ”
+                        </span>
                       </p>
                     ))}
                   </div>
