@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiCrisisAlertRouteImport } from './routes/api/crisis-alert'
 import { Route as ApiAffirmationsRouteImport } from './routes/api/affirmations'
 import { Route as ApiScreenPhq9RouteImport } from './routes/api/screen/phq9'
 import { Route as ApiElevenlabsTtsRouteImport } from './routes/api/elevenlabs/tts'
@@ -21,6 +22,11 @@ import { Route as ApiElevenlabsCloneRouteImport } from './routes/api/elevenlabs/
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCrisisAlertRoute = ApiCrisisAlertRouteImport.update({
+  id: '/api/crisis-alert',
+  path: '/api/crisis-alert',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAffirmationsRoute = ApiAffirmationsRouteImport.update({
@@ -62,6 +68,7 @@ const ApiElevenlabsCloneRoute = ApiElevenlabsCloneRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/api/affirmations': typeof ApiAffirmationsRoute
+  '/api/crisis-alert': typeof ApiCrisisAlertRoute
   '/api/elevenlabs/clone': typeof ApiElevenlabsCloneRoute
   '/api/elevenlabs/music': typeof ApiElevenlabsMusicRoute
   '/api/elevenlabs/reply': typeof ApiElevenlabsReplyRoute
@@ -72,6 +79,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/api/affirmations': typeof ApiAffirmationsRoute
+  '/api/crisis-alert': typeof ApiCrisisAlertRoute
   '/api/elevenlabs/clone': typeof ApiElevenlabsCloneRoute
   '/api/elevenlabs/music': typeof ApiElevenlabsMusicRoute
   '/api/elevenlabs/reply': typeof ApiElevenlabsReplyRoute
@@ -83,6 +91,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/api/affirmations': typeof ApiAffirmationsRoute
+  '/api/crisis-alert': typeof ApiCrisisAlertRoute
   '/api/elevenlabs/clone': typeof ApiElevenlabsCloneRoute
   '/api/elevenlabs/music': typeof ApiElevenlabsMusicRoute
   '/api/elevenlabs/reply': typeof ApiElevenlabsReplyRoute
@@ -95,6 +104,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/api/affirmations'
+    | '/api/crisis-alert'
     | '/api/elevenlabs/clone'
     | '/api/elevenlabs/music'
     | '/api/elevenlabs/reply'
@@ -105,6 +115,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/api/affirmations'
+    | '/api/crisis-alert'
     | '/api/elevenlabs/clone'
     | '/api/elevenlabs/music'
     | '/api/elevenlabs/reply'
@@ -115,6 +126,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/api/affirmations'
+    | '/api/crisis-alert'
     | '/api/elevenlabs/clone'
     | '/api/elevenlabs/music'
     | '/api/elevenlabs/reply'
@@ -126,6 +138,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApiAffirmationsRoute: typeof ApiAffirmationsRoute
+  ApiCrisisAlertRoute: typeof ApiCrisisAlertRoute
   ApiElevenlabsCloneRoute: typeof ApiElevenlabsCloneRoute
   ApiElevenlabsMusicRoute: typeof ApiElevenlabsMusicRoute
   ApiElevenlabsReplyRoute: typeof ApiElevenlabsReplyRoute
@@ -141,6 +154,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/crisis-alert': {
+      id: '/api/crisis-alert'
+      path: '/api/crisis-alert'
+      fullPath: '/api/crisis-alert'
+      preLoaderRoute: typeof ApiCrisisAlertRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/affirmations': {
@@ -198,6 +218,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApiAffirmationsRoute: ApiAffirmationsRoute,
+  ApiCrisisAlertRoute: ApiCrisisAlertRoute,
   ApiElevenlabsCloneRoute: ApiElevenlabsCloneRoute,
   ApiElevenlabsMusicRoute: ApiElevenlabsMusicRoute,
   ApiElevenlabsReplyRoute: ApiElevenlabsReplyRoute,
@@ -208,3 +229,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
