@@ -16,6 +16,7 @@ import { Route as ApiElevenlabsTtsRouteImport } from './routes/api/elevenlabs/tt
 import { Route as ApiElevenlabsSttRouteImport } from './routes/api/elevenlabs/stt'
 import { Route as ApiElevenlabsReplyRouteImport } from './routes/api/elevenlabs/reply'
 import { Route as ApiElevenlabsMusicRouteImport } from './routes/api/elevenlabs/music'
+import { Route as ApiElevenlabsCloneRouteImport } from './routes/api/elevenlabs/clone'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -52,10 +53,16 @@ const ApiElevenlabsMusicRoute = ApiElevenlabsMusicRouteImport.update({
   path: '/api/elevenlabs/music',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiElevenlabsCloneRoute = ApiElevenlabsCloneRouteImport.update({
+  id: '/api/elevenlabs/clone',
+  path: '/api/elevenlabs/clone',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/api/affirmations': typeof ApiAffirmationsRoute
+  '/api/elevenlabs/clone': typeof ApiElevenlabsCloneRoute
   '/api/elevenlabs/music': typeof ApiElevenlabsMusicRoute
   '/api/elevenlabs/reply': typeof ApiElevenlabsReplyRoute
   '/api/elevenlabs/stt': typeof ApiElevenlabsSttRoute
@@ -65,6 +72,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/api/affirmations': typeof ApiAffirmationsRoute
+  '/api/elevenlabs/clone': typeof ApiElevenlabsCloneRoute
   '/api/elevenlabs/music': typeof ApiElevenlabsMusicRoute
   '/api/elevenlabs/reply': typeof ApiElevenlabsReplyRoute
   '/api/elevenlabs/stt': typeof ApiElevenlabsSttRoute
@@ -75,6 +83,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/api/affirmations': typeof ApiAffirmationsRoute
+  '/api/elevenlabs/clone': typeof ApiElevenlabsCloneRoute
   '/api/elevenlabs/music': typeof ApiElevenlabsMusicRoute
   '/api/elevenlabs/reply': typeof ApiElevenlabsReplyRoute
   '/api/elevenlabs/stt': typeof ApiElevenlabsSttRoute
@@ -86,6 +95,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/api/affirmations'
+    | '/api/elevenlabs/clone'
     | '/api/elevenlabs/music'
     | '/api/elevenlabs/reply'
     | '/api/elevenlabs/stt'
@@ -95,6 +105,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/api/affirmations'
+    | '/api/elevenlabs/clone'
     | '/api/elevenlabs/music'
     | '/api/elevenlabs/reply'
     | '/api/elevenlabs/stt'
@@ -104,6 +115,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/api/affirmations'
+    | '/api/elevenlabs/clone'
     | '/api/elevenlabs/music'
     | '/api/elevenlabs/reply'
     | '/api/elevenlabs/stt'
@@ -114,6 +126,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApiAffirmationsRoute: typeof ApiAffirmationsRoute
+  ApiElevenlabsCloneRoute: typeof ApiElevenlabsCloneRoute
   ApiElevenlabsMusicRoute: typeof ApiElevenlabsMusicRoute
   ApiElevenlabsReplyRoute: typeof ApiElevenlabsReplyRoute
   ApiElevenlabsSttRoute: typeof ApiElevenlabsSttRoute
@@ -172,12 +185,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiElevenlabsMusicRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/elevenlabs/clone': {
+      id: '/api/elevenlabs/clone'
+      path: '/api/elevenlabs/clone'
+      fullPath: '/api/elevenlabs/clone'
+      preLoaderRoute: typeof ApiElevenlabsCloneRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApiAffirmationsRoute: ApiAffirmationsRoute,
+  ApiElevenlabsCloneRoute: ApiElevenlabsCloneRoute,
   ApiElevenlabsMusicRoute: ApiElevenlabsMusicRoute,
   ApiElevenlabsReplyRoute: ApiElevenlabsReplyRoute,
   ApiElevenlabsSttRoute: ApiElevenlabsSttRoute,

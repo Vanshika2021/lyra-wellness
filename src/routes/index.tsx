@@ -63,6 +63,7 @@ function LyraSession() {
   const [voiceLoading, setVoiceLoading] = useState(false);
   const [voiceError, setVoiceError] = useState<string | null>(null);
   const voiceAudiosRef = useRef<HTMLAudioElement[]>([]);
+  const clonedVoiceIdRef = useRef<string | null>(null);
   const playTimeoutsRef = useRef<number[]>([]);
   const fadeIntervalsRef = useRef<number[]>([]);
   const timerRef = useRef<number | null>(null);
@@ -134,7 +135,19 @@ function LyraSession() {
         streamRef.current?.getTracks().forEach((t) => t.stop());
         streamRef.current = null;
         setState("processing");
-        await processRecording(blob);
+        // Kick off voice cloning in parallel so AI replies can sound like the user.
+        clonedVoiceIdRef.current = null;
+        const clonePromise = (async () => {
+          try {
+            const cf = new FormData();
+            cf.append("audio", blob, "sample.webm");
+            const cr = await fetch("/api/elevenlabs/clone", { method: "POST", body: cf });
+            if (!cr.ok) return null;
+            const cj = (await cr.json()) as { voiceId?: string };
+            return cj.voiceId ?? null;
+          } catch { return null; }
+        })();
+        await processRecording(blob, clonePromise);
       };
       recorderRef.current = recorder;
       recorder.start(250);
@@ -149,7 +162,7 @@ function LyraSession() {
     }
   }
 
-  async function processRecording(blob: Blob) {
+  async function processRecording(blob: Blob, clonePromise?: Promise<string | null>) {
     setProcessError(null);
     setTranscript("");
     setMood(null);
@@ -207,7 +220,15 @@ function LyraSession() {
       setAffirmations(affs);
 
       void screenPhq9(safeText);
-      void loadAffirmationVoices(affs);
+      // Wait briefly for the clone to finish (don't block UI long); fall back to default voice.
+      const vid = clonePromise
+        ? await Promise.race([
+            clonePromise,
+            new Promise<string | null>((resolve) => setTimeout(() => resolve(null), 12000)),
+          ])
+        : null;
+      clonedVoiceIdRef.current = vid;
+      void loadAffirmationVoices(affs, vid ?? undefined);
     } catch (e) {
       setProcessError(e instanceof Error ? e.message : "Something went quiet. Please try again.");
     } finally {
@@ -250,7 +271,7 @@ function LyraSession() {
     }
   }
 
-  async function loadAffirmationVoices(items: string[]) {
+  async function loadAffirmationVoices(items: string[], voiceId?: string) {
     // Cleanup any previously loaded voices
     voiceAudiosRef.current.forEach((a) => { a.pause(); a.src = ""; });
     voiceAudiosRef.current = [];
@@ -263,7 +284,7 @@ function LyraSession() {
           const res = await fetch("/api/elevenlabs/tts", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ text }),
+            body: JSON.stringify(voiceId ? { text, voiceId } : { text }),
           });
           if (!res.ok) {
             const j = await res.json().catch(() => ({}));
