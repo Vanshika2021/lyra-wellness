@@ -502,7 +502,7 @@ function LyraSession() {
                 <BreathingOrb active size={220} bpm={bpm} />
                 {bpm && (
                   <p className="mt-2 text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-                    Breathing with you · {bpm} bpm
+                    Breathing with you
                   </p>
                 )}
               </div>
