@@ -170,7 +170,24 @@ function LyraSession() {
       setFeatures(null); // server-side state replaces local feature extraction
       setBpm(data.bpm ?? null);
       setMusicUrl(data.musicUrl ?? null);
-      const affs = Array.isArray(data.affirmations) ? data.affirmations.slice(0, 2) : [];
+
+      // Generate contextual affirmations from the user's own words + mood,
+      // instead of using the server's generic ones.
+      let affs: string[] = [];
+      try {
+        const aRes = await fetch("/api/affirmations", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ transcript: safeText, state: s }),
+        });
+        if (aRes.ok) {
+          const aJson = (await aRes.json()) as { affirmations?: string[] };
+          if (Array.isArray(aJson.affirmations)) affs = aJson.affirmations.slice(0, 2);
+        }
+      } catch { /* fall through to server affirmations */ }
+      if (affs.length < 2 && Array.isArray(data.affirmations)) {
+        affs = data.affirmations.slice(0, 2);
+      }
       setAffirmations(affs);
 
       void screenPhq9(safeText);
