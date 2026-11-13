@@ -10,23 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ApiCrisisAlertRouteImport } from './routes/api/crisis-alert'
 import { Route as ApiAffirmationsRouteImport } from './routes/api/affirmations'
-import { Route as ApiScreenPhq9RouteImport } from './routes/api/screen/phq9'
-import { Route as ApiElevenlabsTtsRouteImport } from './routes/api/elevenlabs/tts'
-import { Route as ApiElevenlabsSttRouteImport } from './routes/api/elevenlabs/stt'
-import { Route as ApiElevenlabsReplyRouteImport } from './routes/api/elevenlabs/reply'
-import { Route as ApiElevenlabsMusicRouteImport } from './routes/api/elevenlabs/music'
+import { Route as ApiCrisisAlertRouteImport } from './routes/api/crisis-alert'
 import { Route as ApiElevenlabsCloneRouteImport } from './routes/api/elevenlabs/clone'
+import { Route as ApiElevenlabsMusicRouteImport } from './routes/api/elevenlabs/music'
+import { Route as ApiElevenlabsReplyRouteImport } from './routes/api/elevenlabs/reply'
+import { Route as ApiElevenlabsSttRouteImport } from './routes/api/elevenlabs/stt'
+import { Route as ApiElevenlabsTtsRouteImport } from './routes/api/elevenlabs/tts'
+import { Route as ApiScreenPhq9RouteImport } from './routes/api/screen/phq9'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiCrisisAlertRoute = ApiCrisisAlertRouteImport.update({
-  id: '/api/crisis-alert',
-  path: '/api/crisis-alert',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAffirmationsRoute = ApiAffirmationsRouteImport.update({
@@ -34,24 +29,14 @@ const ApiAffirmationsRoute = ApiAffirmationsRouteImport.update({
   path: '/api/affirmations',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiScreenPhq9Route = ApiScreenPhq9RouteImport.update({
-  id: '/api/screen/phq9',
-  path: '/api/screen/phq9',
+const ApiCrisisAlertRoute = ApiCrisisAlertRouteImport.update({
+  id: '/api/crisis-alert',
+  path: '/api/crisis-alert',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiElevenlabsTtsRoute = ApiElevenlabsTtsRouteImport.update({
-  id: '/api/elevenlabs/tts',
-  path: '/api/elevenlabs/tts',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiElevenlabsSttRoute = ApiElevenlabsSttRouteImport.update({
-  id: '/api/elevenlabs/stt',
-  path: '/api/elevenlabs/stt',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiElevenlabsReplyRoute = ApiElevenlabsReplyRouteImport.update({
-  id: '/api/elevenlabs/reply',
-  path: '/api/elevenlabs/reply',
+const ApiElevenlabsCloneRoute = ApiElevenlabsCloneRouteImport.update({
+  id: '/api/elevenlabs/clone',
+  path: '/api/elevenlabs/clone',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiElevenlabsMusicRoute = ApiElevenlabsMusicRouteImport.update({
@@ -59,9 +44,24 @@ const ApiElevenlabsMusicRoute = ApiElevenlabsMusicRouteImport.update({
   path: '/api/elevenlabs/music',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiElevenlabsCloneRoute = ApiElevenlabsCloneRouteImport.update({
-  id: '/api/elevenlabs/clone',
-  path: '/api/elevenlabs/clone',
+const ApiElevenlabsReplyRoute = ApiElevenlabsReplyRouteImport.update({
+  id: '/api/elevenlabs/reply',
+  path: '/api/elevenlabs/reply',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiElevenlabsSttRoute = ApiElevenlabsSttRouteImport.update({
+  id: '/api/elevenlabs/stt',
+  path: '/api/elevenlabs/stt',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiElevenlabsTtsRoute = ApiElevenlabsTtsRouteImport.update({
+  id: '/api/elevenlabs/tts',
+  path: '/api/elevenlabs/tts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiScreenPhq9Route = ApiScreenPhq9RouteImport.update({
+  id: '/api/screen/phq9',
+  path: '/api/screen/phq9',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -156,13 +156,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/crisis-alert': {
-      id: '/api/crisis-alert'
-      path: '/api/crisis-alert'
-      fullPath: '/api/crisis-alert'
-      preLoaderRoute: typeof ApiCrisisAlertRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/affirmations': {
       id: '/api/affirmations'
       path: '/api/affirmations'
@@ -170,32 +163,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAffirmationsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/screen/phq9': {
-      id: '/api/screen/phq9'
-      path: '/api/screen/phq9'
-      fullPath: '/api/screen/phq9'
-      preLoaderRoute: typeof ApiScreenPhq9RouteImport
+    '/api/crisis-alert': {
+      id: '/api/crisis-alert'
+      path: '/api/crisis-alert'
+      fullPath: '/api/crisis-alert'
+      preLoaderRoute: typeof ApiCrisisAlertRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/elevenlabs/tts': {
-      id: '/api/elevenlabs/tts'
-      path: '/api/elevenlabs/tts'
-      fullPath: '/api/elevenlabs/tts'
-      preLoaderRoute: typeof ApiElevenlabsTtsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/elevenlabs/stt': {
-      id: '/api/elevenlabs/stt'
-      path: '/api/elevenlabs/stt'
-      fullPath: '/api/elevenlabs/stt'
-      preLoaderRoute: typeof ApiElevenlabsSttRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/elevenlabs/reply': {
-      id: '/api/elevenlabs/reply'
-      path: '/api/elevenlabs/reply'
-      fullPath: '/api/elevenlabs/reply'
-      preLoaderRoute: typeof ApiElevenlabsReplyRouteImport
+    '/api/elevenlabs/clone': {
+      id: '/api/elevenlabs/clone'
+      path: '/api/elevenlabs/clone'
+      fullPath: '/api/elevenlabs/clone'
+      preLoaderRoute: typeof ApiElevenlabsCloneRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/elevenlabs/music': {
@@ -205,11 +184,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiElevenlabsMusicRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/elevenlabs/clone': {
-      id: '/api/elevenlabs/clone'
-      path: '/api/elevenlabs/clone'
-      fullPath: '/api/elevenlabs/clone'
-      preLoaderRoute: typeof ApiElevenlabsCloneRouteImport
+    '/api/elevenlabs/reply': {
+      id: '/api/elevenlabs/reply'
+      path: '/api/elevenlabs/reply'
+      fullPath: '/api/elevenlabs/reply'
+      preLoaderRoute: typeof ApiElevenlabsReplyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/elevenlabs/stt': {
+      id: '/api/elevenlabs/stt'
+      path: '/api/elevenlabs/stt'
+      fullPath: '/api/elevenlabs/stt'
+      preLoaderRoute: typeof ApiElevenlabsSttRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/elevenlabs/tts': {
+      id: '/api/elevenlabs/tts'
+      path: '/api/elevenlabs/tts'
+      fullPath: '/api/elevenlabs/tts'
+      preLoaderRoute: typeof ApiElevenlabsTtsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/screen/phq9': {
+      id: '/api/screen/phq9'
+      path: '/api/screen/phq9'
+      fullPath: '/api/screen/phq9'
+      preLoaderRoute: typeof ApiScreenPhq9RouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -229,3 +229,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

@@ -6,6 +6,8 @@ import { Waveform } from "@/components/lyra/Waveform";
 import { MoodState } from "@/components/lyra/MoodState";
 import { extractVocalFeatures, buildMoodSignature, type MoodSignature, type VocalFeatures } from "@/lib/audio-features";
 import TribeBrain from "@/components/lyra/TribeBrain";
+import { PastCheckIns } from "@/components/lyra/PastCheckIns";
+import { saveCheckIn } from "@/lib/checkins";
 import { PHQ9Card, type PHQ9Result } from "@/components/lyra/PHQ9Card";
 import ambientCalm from "@/assets/ambient-calm.mp4.asset.json";
 import ambientWarm from "@/assets/ambient-warm.mp4.asset.json";
@@ -451,6 +453,19 @@ function LyraSession() {
   const showAmbient = state === "results" && musicPlaying;
   const autoStartedRef = useRef(false);
   const scheduledRef = useRef(false);
+  const savedRef = useRef(false);
+
+  useEffect(() => {
+    if (state !== "results") { savedRef.current = false; return; }
+    if (savedRef.current) return;
+    savedRef.current = true;
+    saveCheckIn({
+      distress: mood?.distress ?? 0.5,
+      arousal: mood?.arousal ?? 0.5,
+      transcript,
+      affirmations,
+    });
+  }, [state, mood, transcript, affirmations]);
 
   useEffect(() => {
     const el = ambientRef.current;
@@ -710,6 +725,8 @@ function LyraSession() {
           )}
 
         </section>
+
+        <PastCheckIns />
 
         <footer className="mt-12 text-center text-[10px] uppercase tracking-[0.25em] text-muted-foreground/70">
           Lyra · made with care for cycles
