@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { ErrorComponentProps } from "@tanstack/react-router";
 import {
   Outlet,
   Link,
@@ -24,7 +25,7 @@ function NotFoundComponent() {
   );
 }
 
-function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+function ErrorComponent({ error, reset }: ErrorComponentProps) {
   const router = useRouter();
   useEffect(() => { reportLovableError(error, { boundary: "tanstack_root_error_component" }); }, [error]);
   return (
@@ -32,7 +33,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
       <div className="max-w-md text-center">
         <h1 className="text-xl font-display text-foreground">Something went quiet.</h1>
         <p className="mt-2 text-sm text-muted-foreground">Try again in a moment.</p>
-        <button onClick={() => { router.invalidate(); reset(); }} className="mt-6 rounded-full bg-primary px-5 py-2 text-sm text-primary-foreground">Try again</button>
+        <button onClick={() => { router.invalidate(); reset?.(); }} className="mt-6 rounded-full bg-primary px-5 py-2 text-sm text-primary-foreground">Try again</button>
       </div>
     </div>
   );
